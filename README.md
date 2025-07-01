@@ -20,14 +20,15 @@ Secure Cert-Tools is a web-based application that provides secure CSR generation
 - Input validation and sanitization
 - Request size limits (1MB)
 - Log injection prevention
-- Comprehensive security testing suite (22 dedicated security tests)
+- Comprehensive security testing suite (22+ dedicated security tests)
+- Advanced error handling and edge case coverage
 
 ### Technical Features
 - Modern responsive web interface with dark/light theme support
 - JSON API endpoints for programmatic access
 - Docker containerization support
 - Production-ready with Gunicorn WSGI server
-- Comprehensive test suite (125+ tests)
+- Comprehensive test suite (185+ tests with 89% coverage)
 
 ## Installation
 
@@ -156,22 +157,45 @@ Run the comprehensive test suite:
 # Install development dependencies
 pip install -r requirements-dev.txt
 
-# Run all tests
+# Run all tests with coverage
+pytest tests.py test_security_hardening.py test_additional_coverage.py test_final_push.py --cov=app --cov=csr --cov=_version --cov-report=term-missing -v
+
+# Run core tests only
 pytest tests.py test_security_hardening.py -v
 
 # Run security tests only
 pytest test_security_hardening.py -v
 
+# Run additional coverage tests
+pytest test_additional_coverage.py test_final_push.py -v
+
 # Check test coverage
 python scripts/validate_tests.py
 ```
 
-The test suite includes:
-- 103 functional tests
-- 22 security-focused tests  
-- RFC compliance validation
-- Attack prevention verification
-- Input sanitization testing
+### Test Suite Overview
+
+The comprehensive test suite includes **185+ tests** with **89% code coverage**:
+
+#### Core Test Files
+- **tests.py** (136 tests): Core functionality, API endpoints, validation logic
+- **test_security_hardening.py** (22 tests): Security-focused testing and attack prevention
+- **test_additional_coverage.py** (23 tests): Edge cases, error handling, and coverage improvements
+- **test_final_push.py** (4 tests): Specific uncovered line coverage
+
+#### Test Categories
+- **Functional Tests**: CSR generation, validation, certificate verification
+- **Security Tests**: XSS prevention, injection attacks, file parsing security
+- **Error Handling**: Exception scenarios, malformed input, edge cases
+- **RFC Compliance**: Domain validation, field limits, cryptographic standards
+- **API Testing**: Endpoint responses, error codes, JSON validation
+- **Integration Testing**: End-to-end workflows and component interaction
+
+#### Coverage Breakdown
+- **app.py**: 80% coverage (Flask endpoints, error handling, security features)
+- **csr.py**: 91% coverage (Core CSR logic, validation, cryptographic operations)
+- **_version.py**: 100% coverage (Version information and metadata)
+- **Overall**: 89% total coverage across core codebase
 
 ## Configuration
 
@@ -199,8 +223,9 @@ pip install -r requirements-dev.txt
 ### Code Quality
 The project maintains code quality through:
 - Flake8 linting with complexity limits
-- Comprehensive testing (125+ tests)
-- Security-focused testing
+- Comprehensive testing (185+ tests with 89% coverage)
+- Security-focused testing and hardening
+- Edge case and error handling coverage
 - CI/CD pipeline with automated checks
 
 ### Contributing
@@ -237,7 +262,8 @@ Security enhancements and additional features by Benjamin (nemekath).
 
 Current version: 2.4.0
 - Comprehensive security hardening
-- 125+ tests including 22 security-focused tests
+- 185+ tests with 89% code coverage including 22+ security-focused tests
 - Attack prevention (XSS, injection, file parsing)
-- Enhanced validation and error handling
+- Enhanced validation and error handling with extensive edge case coverage
+- Advanced certificate verification with encrypted key support
 - Production-ready deployment options

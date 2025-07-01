@@ -435,8 +435,16 @@ class TestTimingAttackPrevention:
         avg_invalid = sum(times_invalid) / len(times_invalid)
         
         # Should not have extreme timing differences (more than 10x)
-        timing_ratio = max(avg_valid, avg_invalid) / min(avg_valid, avg_invalid)
-        assert timing_ratio < 10.0
+        min_time = min(avg_valid, avg_invalid)
+        max_time = max(avg_valid, avg_invalid)
+        
+        # Avoid division by zero
+        if min_time > 0:
+            timing_ratio = max_time / min_time
+            assert timing_ratio < 10.0
+        else:
+            # If one time is zero, the other should be small too
+            assert max_time < 0.1
 
 
 class TestCryptographicSecurityHardening:

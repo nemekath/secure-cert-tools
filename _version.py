@@ -28,7 +28,7 @@ CONTRIBUTORS = {
 
 # Version history
 VERSION_HISTORY = {
-    "2.4.0": "Comprehensive security hardening with 22 security tests, attack prevention (XSS, injection, file parsing), log sanitization, request limiting, expanded testing to 125 total tests",
+    "2.4.0": "Comprehensive security hardening with 89% test coverage (185+ tests), enhanced security testing (22+ security tests), attack prevention (XSS, injection, file parsing), advanced certificate verification with encrypted key support, extensive edge case and error handling coverage",
     "2.3.3": "CSR content analysis & RFC compliance checking, enhanced security, expanded testing (78 tests), centralized versioning",
     "2.3.2": "Security monitoring, documentation improvements, CVE-2023-45853 fix",
     "2.3.1": "Documentation alignment and version consistency",

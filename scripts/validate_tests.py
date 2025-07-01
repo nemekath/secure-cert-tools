@@ -13,7 +13,8 @@ def run_command(cmd, description):
     """Run a command and return the result"""
     print(f"🔍 {description}...")
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+        cmd_list = cmd.split() if isinstance(cmd, str) else cmd
+        result = subprocess.run(cmd_list, capture_output=True, text=True)
         return result
     except Exception as e:
         print(f"❌ Error running command: {e}")
@@ -87,9 +88,9 @@ def validate_security_tests():
 
 def validate_expected_test_count():
     """Validate that we have the expected number of tests"""
-    expected_total = 125
+    expected_total = 158
     expected_security = 22
-    expected_functional = 103
+    expected_functional = 136
     
     # Run functional tests
     cmd_functional = "python -m pytest tests.py -v --tb=short"
