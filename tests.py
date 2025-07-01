@@ -280,11 +280,10 @@ class TestFlaskApp:
         assert response.status_code == 200
         assert b'html' in response.data.lower()
     
-    def test_security_page(self, client):
-        """Test that security page loads"""
+    def test_security_page_removed(self, client):
+        """Test that security page was removed and returns 404"""
         response = client.get('/security')
-        assert response.status_code == 200
-        assert b'html' in response.data.lower()
+        assert response.status_code == 404
     
     def test_generate_csr_post(self, client):
         """Test CSR generation via POST request"""
