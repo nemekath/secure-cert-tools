@@ -96,11 +96,6 @@ def index():
     return render_template('modern_index.html')
 
 
-@app.route('/security')
-def security():
-    return render_template('security.html')
-
-
 @app.route('/version')
 def version():
     """Return version information as JSON"""

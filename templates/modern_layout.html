@@ -54,6 +54,12 @@
                 </a>
                 
                 <div class="nav__actions">
+                    <!-- Language Toggle -->
+                    <div class="language-toggle">
+                        <button class="lang-btn" data-lang="en" title="English">EN</button>
+                        <button class="lang-btn active" data-lang="de" title="Deutsch">DE</button>
+                    </div>
+                    
                     <button class="btn btn--ghost btn--icon" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle theme">
                         <svg class="icon icon--sun" viewBox="0 0 24 24" fill="currentColor">
                             <circle cx="12" cy="12" r="5"/>
@@ -71,7 +77,7 @@
                         </svg>
                     </button>
                     
-                    <a href="https://github.com/nemekath/csrgenerator-secure" 
+                    <a href="https://github.com/nemekath/secure-cert-tools" 
                        class="btn btn--ghost btn--sm" 
                        target="_blank" 
                        rel="noopener noreferrer"
@@ -101,14 +107,12 @@
                     Built with ❤️ for secure certificate management
                 </p>
                 <div class="footer__links">
-                    <a href="https://github.com/nemekath/csrgenerator-secure" 
+                    <a href="https://github.com/nemekath/secure-cert-tools" 
                        target="_blank" 
                        rel="noopener noreferrer"
                        class="footer__link">
                         Source Code
                     </a>
-                    <span class="footer__separator">•</span>
-                    <a href="/security" class="footer__link">Security & Features</a>
                 </div>
             </div>
         </div>
@@ -124,6 +128,238 @@
             <p class="loading-text">Processing...</p>
         </div>
     </div>
+    
+    <!-- Translation System -->
+    <script type="module">
+        // Translation data
+        const translations = {
+            en: {
+                'hero.title': 'Secure Cert-Tools',
+                'hero.subtitle': 'Professional certificate toolkit with CSR generation, validation, analysis, and verification capabilities',
+                'hero.feature1': 'RSA & ECDSA Support',
+                'hero.feature2': 'Secure & Private',
+                'hero.feature3': 'Fast Generation',
+                'nav.generate': 'Generate CSR',
+                'nav.verify': 'Verify & Match CSR',
+                'nav.analyze': 'Analyze CSR', 
+                'nav.verify_cert': 'Verify Match Cert',
+                'generate.title': 'Generate Certificate Signing Request',
+                'generate.subtitle': 'Create a new CSR and private key pair',
+                'form.subject_info': 'Certificate Subject Information',
+                'form.country': 'Country Code',
+                'form.country_help': 'Two letter ISO country code (e.g., US, DE, FR)',
+                'form.state': 'State/Province',
+                'form.state_help': 'Full state or province name',
+                'form.city': 'City/Locality',
+                'form.city_help': 'Full city or locality name',
+                'form.organization': 'Organization',
+                'form.organization_help': 'Full legal organization name',
+                'form.organizational_unit': 'Organizational Unit',
+                'form.organizational_unit_help': 'Department or division within organization',
+                'form.common_name': 'Common Name',
+                'form.common_name_help': 'The FQDN for your domain (no spaces allowed)',
+                'form.san': 'Subject Alternative Names',
+                'form.san_help': 'Comma-separated list of alternative domain names',
+                'form.private_ca': 'Private CA Settings',
+                'form.allow_private_domains': 'Allow private/corporate network domains',
+                'form.private_domains_help': 'Enable this option for private Certificate Authorities in corporate networks.',
+                'form.crypto_settings': 'Cryptographic Settings',
+                'form.key_type': 'Key Type',
+                'form.key_type_help': 'Type of cryptographic key to generate',
+                'form.rsa_size': 'RSA Key Size',
+                'form.rsa_size_help': 'Size of the RSA modulus in bits',
+                'form.ecdsa_curve': 'ECDSA Curve',
+                'form.ecdsa_curve_help': 'ECDSA curve to use for key generation',
+                'btn.generate': 'Generate CSR & Private Key',
+                'verify.title': 'Verify CSR & Private Key Match',
+                'verify.subtitle': 'Check if your CSR and private key belong together',
+                'verify.csr_label': 'Certificate Signing Request (CSR)',
+                'verify.csr_help': 'Paste the complete CSR including headers or upload a file (.csr, .pem, .txt)',
+                'verify.key_label': 'Private Key',
+                'verify.key_help': 'Paste the complete private key including headers or upload a file (.key, .pem, .txt)',
+                'btn.upload_csr': '📁 Upload CSR File',
+                'btn.upload_key': '🔐 Upload Private Key File',
+                'btn.verify': 'Verify Match',
+                'analyze.title': 'Analyze CSR Content',
+                'analyze.subtitle': 'Inspect CSR details and check RFC compliance',
+                'analyze.csr_help': 'Paste the complete CSR to analyze its content and compliance or upload a file (.csr, .pem, .txt)',
+                'btn.upload_analyze': '📄 Upload CSR File',
+                'btn.analyze': 'Analyze CSR',
+                'verify_cert.title': 'Verify Certificate & Private Key Match',
+                'verify_cert.subtitle': 'Check if your CA-signed certificate and private key belong together',
+                'verify_cert.cert_label': 'CA-Signed Certificate',
+                'verify_cert.cert_help': 'Paste the complete CA-signed certificate including headers or upload a file (.crt, .cer, .pem, .txt)',
+                'verify_cert.key_help': 'Paste the complete private key including headers or upload a file (.key, .pem, .txt). Supports both encrypted and unencrypted private keys.',
+                'verify_cert.passphrase': 'Private Key Passphrase',
+                'verify_cert.passphrase_help': 'This private key is encrypted and requires a passphrase to decrypt it.',
+                'btn.upload_cert': '🏆 Upload Certificate File',
+                'btn.verify_cert': 'Verify Certificate Match',
+                'modal.close': 'Close',
+                'security.title': 'Security & Technical Specifications',
+                'security.subtitle': 'Comprehensive security implementation for certificate management professionals',
+                'security.architecture.title': '🔒 Security Architecture',
+                'security.architecture.subtitle': 'Technical implementation details for security professionals',
+                'security.architecture.zero_storage.title': 'Zero Persistence',
+                'security.architecture.zero_storage.description': 'Cryptographic material processed in-memory only. No server-side storage, logging, or persistence mechanisms for sensitive data.',
+                'security.architecture.session.title': 'Session Isolation',
+                'security.architecture.session.description': 'Process isolation per session with automatic memory cleanup. Cryptographic operations scoped to request lifecycle.',
+                'security.architecture.transport.title': 'Transport Security',
+                'security.architecture.transport.description': 'TLS 1.3 with AEAD ciphers, HSTS, and comprehensive security headers. Perfect forward secrecy enforced.',
+                'security.architecture.crypto.title': 'Cryptographic Standards',
+                'security.architecture.crypto.description': 'FIPS 140-2 compliant algorithms. RSA ≥2048-bit, ECDSA P-256/P-384/P-521, SHA-256+ signatures.',
+                'features.title': '🚀 Technical Capabilities',
+                'features.subtitle': 'Professional certificate lifecycle management',
+                'features.generation.title': '📝 CSR Generation',
+                'features.generation.rsa': '<strong>RSA:</strong> 2048/4096-bit modulus with secure random generation',
+                'features.generation.ecdsa': '<strong>ECDSA:</strong> NIST P-256/P-384/P-521 curves (secp256r1, secp384r1, secp521r1)',
+                'features.generation.compliance': '<strong>Standards:</strong> RFC 5280, RFC 6125, RFC 2818 compliance validation',
+                'features.generation.private': '<strong>Private PKI:</strong> .local, .corp, single-label domains, IPv4/IPv6 support',
+                'features.generation.san': '<strong>SAN Extensions:</strong> Multi-domain, wildcard, IP address alternative names',
+                'features.verification.title': '🔍 Cryptographic Verification',
+                'features.verification.csr_key': '<strong>CSR-Key Validation:</strong> Public key cryptographic matching verification',
+                'features.verification.cert_key': '<strong>Certificate-Key Validation:</strong> CA-signed certificate private key correspondence',
+                'features.verification.encrypted': '<strong>Encrypted Key Support:</strong> PKCS#8, traditional OpenSSL encrypted private keys',
+                'features.verification.formats': '<strong>Format Support:</strong> PEM, DER, PKCS#1, PKCS#8, SEC1 key formats',
+                'features.analysis.title': '📊 Certificate Analysis',
+                'features.analysis.compliance': '<strong>RFC Validation:</strong> RFC 5280/6125/2818 compliance assessment',
+                'features.analysis.security': '<strong>Security Analysis:</strong> Cryptographic strength evaluation, algorithm assessment',
+                'features.analysis.extensions': '<strong>Extension Parsing:</strong> X.509v3 extensions, critical flag analysis',
+                'features.analysis.domain': '<strong>Domain Classification:</strong> Public vs. private CA suitability assessment'
+            },
+            de: {
+                'hero.title': 'Secure Cert-Tools',
+                'hero.subtitle': 'Professionelles Zertifikat-Toolkit mit CSR-Generierung, Validierung, Analyse und Verifikation',
+                'hero.feature1': 'RSA & ECDSA Unterstützung',
+                'hero.feature2': 'Sicher & Privat',
+                'hero.feature3': 'Schnelle Generierung',
+                'nav.generate': 'CSR Generieren',
+                'nav.verify': 'CSR Prüfen & Abgleichen',
+                'nav.analyze': 'CSR Analysieren',
+                'nav.verify_cert': 'Zertifikat Prüfen',
+                'generate.title': 'Certificate Signing Request generieren',
+                'generate.subtitle': 'Neuen CSR und Private-Key erstellen',
+                'form.subject_info': 'Zertifikat-Subject-Informationen',
+                'form.country': 'Ländercode',
+                'form.country_help': 'Zwei-Buchstaben ISO-Ländercode (z.B. US, DE, FR)',
+                'form.state': 'Bundesland/Provinz',
+                'form.state_help': 'Vollständiger Name des Bundeslandes oder der Provinz',
+                'form.city': 'Stadt/Ort',
+                'form.city_help': 'Vollständiger Stadt- oder Ortsname',
+                'form.organization': 'Organisation',
+                'form.organization_help': 'Vollständiger rechtlicher Organisationsname',
+                'form.organizational_unit': 'Organisationseinheit',
+                'form.organizational_unit_help': 'Abteilung oder Bereich innerhalb der Organisation',
+                'form.common_name': 'Common Name',
+                'form.common_name_help': 'Der FQDN für Ihre Domain (keine Leerzeichen erlaubt)',
+                'form.san': 'Subject Alternative Names',
+                'form.san_help': 'Kommagetrennte Liste alternativer Domain-Namen',
+                'form.private_ca': 'Private CA-Einstellungen',
+                'form.allow_private_domains': 'Private/Unternehmens-Netzwerk-Domains zulassen',
+                'form.private_domains_help': 'Diese Option für private Certificate Authorities in Unternehmensnetzwerken aktivieren.',
+                'form.crypto_settings': 'Kryptographische Einstellungen',
+                'form.key_type': 'Schlüsseltyp',
+                'form.key_type_help': 'Art des zu generierenden kryptographischen Schlüssels',
+                'form.rsa_size': 'RSA-Schlüsselgröße',
+                'form.rsa_size_help': 'Größe des RSA-Modulus in Bits',
+                'form.ecdsa_curve': 'ECDSA-Kurve',
+                'form.ecdsa_curve_help': 'ECDSA-Kurve für die Schlüsselgenerierung',
+                'btn.generate': 'CSR & Private Key generieren',
+                'verify.title': 'CSR & Private Key Übereinstimmung prüfen',
+                'verify.subtitle': 'Prüfen, ob CSR und Private Key zusammengehören',
+                'verify.csr_label': 'Certificate Signing Request (CSR)',
+                'verify.csr_help': 'Vollständigen CSR inkl. Header einfügen oder Datei hochladen (.csr, .pem, .txt)',
+                'verify.key_label': 'Private Key',
+                'verify.key_help': 'Vollständigen Private Key inkl. Header einfügen oder Datei hochladen (.key, .pem, .txt)',
+                'btn.upload_csr': '📁 CSR-Datei hochladen',
+                'btn.upload_key': '🔐 Private-Key-Datei hochladen',
+                'btn.verify': 'Übereinstimmung prüfen',
+                'analyze.title': 'CSR-Inhalt analysieren',
+                'analyze.subtitle': 'CSR-Details inspizieren und RFC-Compliance prüfen',
+                'analyze.csr_help': 'Vollständigen CSR für Analyse einfügen oder Datei hochladen (.csr, .pem, .txt)',
+                'btn.upload_analyze': '📄 CSR-Datei hochladen',
+                'btn.analyze': 'CSR analysieren',
+                'verify_cert.title': 'Zertifikat & Private Key Übereinstimmung prüfen',
+                'verify_cert.subtitle': 'Prüfen, ob CA-signiertes Zertifikat und Private Key zusammengehören',
+                'verify_cert.cert_label': 'CA-signiertes Zertifikat',
+                'verify_cert.cert_help': 'Vollständiges CA-signiertes Zertifikat inkl. Header einfügen oder Datei hochladen (.crt, .cer, .pem, .txt)',
+                'verify_cert.key_help': 'Vollständigen Private Key inkl. Header einfügen oder Datei hochladen (.key, .pem, .txt). Unterstützt verschlüsselte und unverschlüsselte Private Keys.',
+                'verify_cert.passphrase': 'Private Key Passphrase',
+                'verify_cert.passphrase_help': 'Dieser Private Key ist verschlüsselt und benötigt eine Passphrase zur Entschlüsselung.',
+                'btn.upload_cert': '🏆 Zertifikat-Datei hochladen',
+                'btn.verify_cert': 'Zertifikat-Übereinstimmung prüfen',
+                'modal.close': 'Schließen',
+                'security.title': 'Sicherheit & Technische Spezifikationen',
+                'security.subtitle': 'Umfassende Sicherheitsimplementierung für Zertifikat-Management-Profis',
+                'security.architecture.title': '🔒 Sicherheitsarchitektur',
+                'security.architecture.subtitle': 'Technische Implementierungsdetails für Sicherheitsexperten',
+                'security.architecture.zero_storage.title': 'Zero Persistierung',
+                'security.architecture.zero_storage.description': 'Kryptographisches Material wird nur im Arbeitsspeicher verarbeitet. Keine serverseitige Speicherung, Protokollierung oder Persistierungsmechanismen für sensible Daten.',
+                'security.architecture.session.title': 'Session-Isolation',
+                'security.architecture.session.description': 'Prozessisolation pro Session mit automatischer Speicherbereinigung. Kryptographische Operationen auf Request-Lebenszyklus beschränkt.',
+                'security.architecture.transport.title': 'Transportsicherheit',
+                'security.architecture.transport.description': 'TLS 1.3 mit AEAD-Chiffren, HSTS und umfassende Sicherheitsheader. Perfect Forward Secrecy erzwungen.',
+                'security.architecture.crypto.title': 'Kryptographische Standards',
+                'security.architecture.crypto.description': 'FIPS 140-2 konforme Algorithmen. RSA ≥2048-bit, ECDSA P-256/P-384/P-521, SHA-256+ Signaturen.',
+                'features.title': '🚀 Technische Fähigkeiten',
+                'features.subtitle': 'Professionelles Zertifikat-Lifecycle-Management',
+                'features.generation.title': '📝 CSR-Generierung',
+                'features.generation.rsa': '<strong>RSA:</strong> 2048/4096-bit Modulus mit sicherer Zufallsgenerierung',
+                'features.generation.ecdsa': '<strong>ECDSA:</strong> NIST P-256/P-384/P-521 Kurven (secp256r1, secp384r1, secp521r1)',
+                'features.generation.compliance': '<strong>Standards:</strong> RFC 5280, RFC 6125, RFC 2818 Compliance-Validierung',
+                'features.generation.private': '<strong>Private PKI:</strong> .local, .corp, Single-Label-Domains, IPv4/IPv6 Unterstützung',
+                'features.generation.san': '<strong>SAN-Erweiterungen:</strong> Multi-Domain, Wildcard, IP-Adress alternative Namen',
+                'features.verification.title': '🔍 Kryptographische Verifikation',
+                'features.verification.csr_key': '<strong>CSR-Key Validierung:</strong> Public-Key kryptographische Übereinstimmungsverifikation',
+                'features.verification.cert_key': '<strong>Zertifikat-Key Validierung:</strong> CA-signierte Zertifikat Private-Key Korrespondenz',
+                'features.verification.encrypted': '<strong>Verschlüsselte Key-Unterstützung:</strong> PKCS#8, traditionelle OpenSSL verschlüsselte Private Keys',
+                'features.verification.formats': '<strong>Format-Unterstützung:</strong> PEM, DER, PKCS#1, PKCS#8, SEC1 Key-Formate',
+                'features.analysis.title': '📊 Zertifikat-Analyse',
+                'features.analysis.compliance': '<strong>RFC-Validierung:</strong> RFC 5280/6125/2818 Compliance-Bewertung',
+                'features.analysis.security': '<strong>Sicherheitsanalyse:</strong> Kryptographische Stärke-Evaluierung, Algorithmus-Bewertung',
+                'features.analysis.extensions': '<strong>Extension-Parsing:</strong> X.509v3 Erweiterungen, Critical-Flag Analyse',
+                'features.analysis.domain': '<strong>Domain-Klassifizierung:</strong> Öffentlich vs. private CA-Eignung Bewertung'
+            }
+        };
+
+        // Language management
+        let currentLanguage = localStorage.getItem('language') || 'en';
+        
+        function translatePage(lang) {
+            const elements = document.querySelectorAll('[data-i18n]');
+            elements.forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    element.innerHTML = translations[lang][key];
+                }
+            });
+        }
+        
+        function updateLanguageButtons(lang) {
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.lang === lang) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+        
+        // Initialize language
+        document.addEventListener('DOMContentLoaded', () => {
+            translatePage(currentLanguage);
+            updateLanguageButtons(currentLanguage);
+            
+            // Language toggle event listeners
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const lang = btn.dataset.lang;
+                    currentLanguage = lang;
+                    localStorage.setItem('language', lang);
+                    translatePage(lang);
+                    updateLanguageButtons(lang);
+                });
+            });
+        });
+    </script>
     
     <!-- Modern JavaScript (ES6+ modules) -->
     <script type="module" src="{{ url_for('static', filename='js/modern.js') }}"></script>

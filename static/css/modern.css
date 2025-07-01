@@ -139,6 +139,60 @@ body {
     align-items: center;
 }
 
+/* Language Toggle */
+.language-toggle {
+    display: flex;
+    gap: 2px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.lang-btn {
+    background-color: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 40px;
+}
+
+.lang-btn:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: white;
+}
+
+.lang-btn.active {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: 600;
+}
+
+/* Dark theme language toggle adjustments */
+[data-theme="dark"] .language-toggle {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .lang-btn {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="dark"] .lang-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="dark"] .lang-btn.active {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: white;
+}
+
 /* Navigation Links - Fix light theme visibility */
 .nav__actions .btn--ghost {
     background-color: transparent;
@@ -1317,41 +1371,6 @@ body {
     flex: 1;
 }
 
-.security-notice {
-    background-color: #d1ecf1;
-    border: 1px solid #17a2b8;
-    border-radius: 8px;
-    padding: 16px;
-}
-
-.security-notice h4 {
-    color: #0c5460;
-    margin-bottom: 12px;
-    font-size: 16px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.security-notice ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.security-notice li {
-    color: #0c5460;
-    font-size: 14px;
-    line-height: 1.5;
-    margin-bottom: 8px;
-    padding-left: 12px;
-    position: relative;
-}
-
-.security-notice li:last-child {
-    margin-bottom: 0;
-}
 
 /* Enhanced Analysis Result Styles */
 .analysis-result {
