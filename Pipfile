@@ -1,0 +1,33 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pytest = ">=8.4.1"
+flake8 = ">=7.3.0"
+
+[packages]
+blinker = ">=1.9.0"
+cffi = ">=1.17.1"
+click = ">=8.1.8"
+cryptography = ">=45.0.4"
+Flask = ">=3.1.1"
+Gunicorn = ">=23.0.0"
+itsdangerous = ">=2.2.0"
+Jinja2 = ">=3.1.6"
+MarkupSafe = ">=3.0.2"
+pycparser = ">=2.22"
+pyOpenSSL = ">=25.1.0"
+setuptools = ">=80.9.0"
+Werkzeug = ">=3.1.3"
+typing-extensions = ">=4.14.0"
+
+[requires]
+python_version = "3.11"
+
+[scripts]
+test = "pytest tests.py"
+check = "flake8 --max-line-length=120"
+lint = "flake8 --max-line-length=120 ."
+security-check = "python -c 'import sys; from pkg_resources import get_distribution; print(f\"pyOpenSSL: {get_distribution(\"pyOpenSSL\").version}\"); print(f\"cryptography: {get_distribution(\"cryptography\").version}\"); print(f\"setuptools: {get_distribution(\"setuptools\").version}\")'"

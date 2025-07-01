@@ -1,0 +1,8 @@
+*.pyc
+env
+
+# SSL Certificates (auto-generated)
+certs/
+*.crt
+*.key
+*.pem

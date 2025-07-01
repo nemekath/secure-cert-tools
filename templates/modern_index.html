@@ -1,0 +1,593 @@
+{% extends "modern_layout.html" %}
+
+{% block title %}Secure Cert-Tools - Professional Certificate Toolkit{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <div class="hero__content">
+        <h1 class="hero__title">
+            <svg class="hero__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+            </svg>
+            Secure Cert-Tools
+        </h1>
+        <p class="hero__subtitle">
+            Professional certificate toolkit with CSR generation, validation, analysis, and verification capabilities
+        </p>
+        <div class="hero__features">
+            <div class="feature">
+                <svg class="feature__icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>RSA & ECDSA Support</span>
+            </div>
+            <div class="feature">
+                <svg class="feature__icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+                <span>Secure & Private</span>
+            </div>
+            <div class="feature">
+                <svg class="feature__icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span>Fast Generation</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab Navigation -->
+<div class="tabs" role="tablist" aria-label="CSR Generator Functions">
+    <button class="tab tab--active" 
+            role="tab" 
+            aria-selected="true" 
+            aria-controls="generate-panel" 
+            id="generate-tab"
+            data-tab="generate">
+        <svg class="tab__icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+        </svg>
+        Generate CSR
+    </button>
+    
+    <button class="tab" 
+            role="tab" 
+            aria-selected="false" 
+            aria-controls="verify-panel" 
+            id="verify-tab"
+            data-tab="verify">
+        <svg class="tab__icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Verify & Match CSR
+    </button>
+    
+    <button class="tab" 
+            role="tab" 
+            aria-selected="false" 
+            aria-controls="analyze-panel" 
+            id="analyze-tab"
+            data-tab="analyze">
+        <svg class="tab__icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+        </svg>
+        Analyze CSR
+    </button>
+    
+    <button class="tab" 
+            role="tab" 
+            aria-selected="false" 
+            aria-controls="verify-cert-panel" 
+            id="verify-cert-tab"
+            data-tab="verify-cert">
+        <svg class="tab__icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        </svg>
+        Verify Match Cert
+    </button>
+</div>
+
+<!-- Tab Panels -->
+<div class="tab-panels">
+    <!-- Generate CSR Panel -->
+    <div class="panel panel--active" 
+         role="tabpanel" 
+         aria-labelledby="generate-tab" 
+         id="generate-panel">
+        
+        <div class="card">
+            <div class="card__header">
+                <h2 class="card__title">Generate Certificate Signing Request</h2>
+                <p class="card__subtitle">Create a new CSR and private key pair</p>
+            </div>
+            
+            <form class="form" id="generate-form" novalidate>
+                <div class="form__grid">
+                    <!-- Subject Information -->
+                    <fieldset class="form__section">
+                        <legend class="form__legend">Certificate Subject Information</legend>
+                        
+                        <div class="form__row">
+                            <div class="form__group">
+                                <label class="form__label" for="country">
+                                    Country Code
+                                    <span class="form__required" aria-label="required">*</span>
+                                </label>
+                                <input class="form__input" 
+                                       type="text" 
+                                       id="country" 
+                                       name="C" 
+                                       placeholder="US" 
+                                       maxlength="2" 
+                                       pattern="[A-Z]{2}"
+                                       aria-describedby="country-help country-error"
+                                       autocomplete="country">
+                                <div class="form__help" id="country-help">Two letter ISO country code (e.g., US, DE, FR)</div>
+                                <div class="form__error" id="country-error" role="alert"></div>
+                            </div>
+                            
+                            <div class="form__group">
+                                <label class="form__label" for="state">State/Province</label>
+                                <input class="form__input" 
+                                       type="text" 
+                                       id="state" 
+                                       name="ST" 
+                                       placeholder="Texas" 
+                                       maxlength="128"
+                                       aria-describedby="state-help state-error"
+                                       autocomplete="address-level1">
+                                <div class="form__help" id="state-help">Full state or province name</div>
+                                <div class="form__error" id="state-error" role="alert"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="form__row">
+                            <div class="form__group">
+                                <label class="form__label" for="locality">City/Locality</label>
+                                <input class="form__input" 
+                                       type="text" 
+                                       id="locality" 
+                                       name="L" 
+                                       placeholder="San Antonio" 
+                                       maxlength="128"
+                                       aria-describedby="locality-help locality-error"
+                                       autocomplete="address-level2">
+                                <div class="form__help" id="locality-help">Full city or locality name</div>
+                                <div class="form__error" id="locality-error" role="alert"></div>
+                            </div>
+                            
+                            <div class="form__group">
+                                <label class="form__label" for="organization">Organization</label>
+                                <input class="form__input" 
+                                       type="text" 
+                                       id="organization" 
+                                       name="O" 
+                                       placeholder="Example Corp" 
+                                       maxlength="64"
+                                       aria-describedby="organization-help organization-error"
+                                       autocomplete="organization">
+                                <div class="form__help" id="organization-help">Full legal organization name</div>
+                                <div class="form__error" id="organization-error" role="alert"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="form__row">
+                            <div class="form__group">
+                                <label class="form__label" for="organizational-unit">Organizational Unit</label>
+                                <input class="form__input" 
+                                       type="text" 
+                                       id="organizational-unit" 
+                                       name="OU" 
+                                       placeholder="IT Department" 
+                                       maxlength="64"
+                                       aria-describedby="ou-help ou-error">
+                                <div class="form__help" id="ou-help">Department or division within organization</div>
+                                <div class="form__error" id="ou-error" role="alert"></div>
+                            </div>
+                            
+                            <div class="form__group">
+                                <label class="form__label" for="common-name">
+                                    Common Name
+                                    <span class="form__required" aria-label="required">*</span>
+                                </label>
+                                <input class="form__input" 
+                                       type="text" 
+                                       id="common-name" 
+                                       name="CN" 
+                                       placeholder="example.com" 
+                                       maxlength="64" 
+                                       required
+                                       aria-describedby="cn-help cn-error">
+                                <div class="form__help" id="cn-help">The FQDN for your domain (no spaces allowed)</div>
+                                <div class="form__error" id="cn-error" role="alert"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="form__group">
+                            <label class="form__label" for="san">Subject Alternative Names</label>
+                            <input class="form__input" 
+                                   type="text" 
+                                   id="san" 
+                                   name="subjectAltNames" 
+                                   placeholder="api.example.com, *.example.com" 
+                                   aria-describedby="san-help san-error">
+                            <div class="form__help" id="san-help">Comma-separated list of alternative domain names</div>
+                            <div class="form__error" id="san-error" role="alert"></div>
+                        </div>
+                    </fieldset>
+                    
+                    <!-- Private CA Options -->
+                    <fieldset class="form__section">
+                        <legend class="form__legend">Private CA Settings</legend>
+                        
+                        <div class="form__group">
+                            <label class="checkbox">
+                                <input type="checkbox" 
+                                       id="allow-private-domains" 
+                                       name="allowPrivateDomains" 
+                                       value="true"
+                                       aria-describedby="private-domains-help">
+                                <span class="checkbox__indicator"></span>
+                                <span class="checkbox__label">Allow private/corporate network domains</span>
+                            </label>
+                            <div class="form__help" id="private-domains-help">
+                                Enable this option for private Certificate Authorities in corporate networks.<br>
+                                <strong>Allowed domains:</strong>
+                                <ul class="help-list">
+                                    <li><strong>.local</strong> - Windows Active Directory domains (e.g., server.local)</li>
+                                    <li><strong>.corp, .internal</strong> - Corporate internal domains</li>
+                                    <li><strong>Single-label domains</strong> - Short names (e.g., server, database)</li>
+                                    <li><strong>IP addresses</strong> - IPv4/IPv6 addresses (e.g., 192.168.1.100)</li>
+                                    <li><strong>.test, .example</strong> - RFC 6761 reserved domains for testing</li>
+                                </ul>
+                                <em>⚠️ Only use for internal/private networks. Public CAs will reject these domains.</em>
+                            </div>
+                        </div>
+                    </fieldset>
+                    
+                    <!-- Cryptographic Options -->
+                    <fieldset class="form__section">
+                        <legend class="form__legend">Cryptographic Settings</legend>
+                        
+                        <div class="form__group">
+                            <legend class="form__label">Key Type</legend>
+                            <div class="radio-group" role="radiogroup" aria-describedby="keytype-help">
+                                <label class="radio">
+                                    <input type="radio" name="keyType" value="RSA" checked>
+                                    <span class="radio__indicator"></span>
+                                    <span class="radio__label">RSA</span>
+                                </label>
+                                <label class="radio">
+                                    <input type="radio" name="keyType" value="ECDSA">
+                                    <span class="radio__indicator"></span>
+                                    <span class="radio__label">ECDSA (Elliptic Curve)</span>
+                                </label>
+                            </div>
+                            <div class="form__help" id="keytype-help">Type of cryptographic key to generate</div>
+                        </div>
+                        
+                        <div class="form__group" id="rsa-options">
+                            <legend class="form__label">RSA Key Size</legend>
+                            <div class="radio-group" role="radiogroup" aria-describedby="keysize-help">
+                                <label class="radio">
+                                    <input type="radio" name="keySize" value="2048" checked>
+                                    <span class="radio__indicator"></span>
+                                    <span class="radio__label">2048 bits (Recommended)</span>
+                                </label>
+                                <label class="radio">
+                                    <input type="radio" name="keySize" value="4096">
+                                    <span class="radio__indicator"></span>
+                                    <span class="radio__label">4096 bits (Higher Security)</span>
+                                </label>
+                            </div>
+                            <div class="form__help" id="keysize-help">Size of the RSA modulus in bits</div>
+                        </div>
+                        
+                        <div class="form__group" id="ecdsa-options" style="display: none;">
+                            <legend class="form__label">ECDSA Curve</legend>
+                            <div class="radio-group" role="radiogroup" aria-describedby="curve-help">
+                                <label class="radio">
+                                    <input type="radio" name="curve" value="P-256" checked>
+                                    <span class="radio__indicator"></span>
+                                    <span class="radio__label">P-256 (secp256r1)</span>
+                                </label>
+                                <label class="radio">
+                                    <input type="radio" name="curve" value="P-384">
+                                    <span class="radio__indicator"></span>
+                                    <span class="radio__label">P-384 (secp384r1)</span>
+                                </label>
+                                <label class="radio">
+                                    <input type="radio" name="curve" value="P-521">
+                                    <span class="radio__indicator"></span>
+                                    <span class="radio__label">P-521 (secp521r1)</span>
+                                </label>
+                            </div>
+                            <div class="form__help" id="curve-help">ECDSA curve to use for key generation</div>
+                        </div>
+                    </fieldset>
+                </div>
+                
+                <div class="form__actions">
+                    <button type="submit" class="btn btn--primary btn--large">
+                        <svg class="btn__icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                        </svg>
+                        Generate CSR & Private Key
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Verify Panel -->
+    <div class="panel" 
+         role="tabpanel" 
+         aria-labelledby="verify-tab" 
+         id="verify-panel"
+         aria-hidden="true">
+        
+        <div class="card">
+            <div class="card__header">
+                <h2 class="card__title">Verify CSR & Private Key Match</h2>
+                <p class="card__subtitle">Check if your CSR and private key belong together</p>
+            </div>
+            
+            <form class="form" id="verify-form" novalidate>
+                <div class="form__group">
+                    <label class="form__label" for="verify-csr">
+                        Certificate Signing Request (CSR)
+                        <span class="form__required" aria-label="required">*</span>
+                    </label>
+                    <div class="file-input-group">
+                        <input type="file" 
+                               id="csr-file-input" 
+                               class="file-input" 
+                               accept=".csr,.pem,.txt" 
+                               aria-describedby="csr-file-help">
+                        <button type="button" 
+                                class="btn btn--secondary btn--sm file-upload-btn" 
+                                id="csr-upload-btn">
+                            📁 Upload CSR File
+                        </button>
+                        <span class="file-upload-status" id="csr-upload-status"></span>
+                    </div>
+                    <textarea class="form__textarea" 
+                              id="verify-csr" 
+                              name="csr" 
+                              rows="8" 
+                              required
+                              placeholder="-----BEGIN CERTIFICATE REQUEST-----
+Paste your CSR here or use the upload button above...
+-----END CERTIFICATE REQUEST-----"
+                              aria-describedby="verify-csr-help verify-csr-error"></textarea>
+                    <div class="form__help" id="verify-csr-help">Paste the complete CSR including headers or upload a file (.csr, .pem, .txt)</div>
+                    <div class="form__error" id="verify-csr-error" role="alert"></div>
+                </div>
+                
+                <div class="form__group">
+                    <label class="form__label" for="verify-key">
+                        Private Key
+                        <span class="form__required" aria-label="required">*</span>
+                    </label>
+                    <div class="file-input-group">
+                        <input type="file" 
+                               id="key-file-input" 
+                               class="file-input" 
+                               accept=".key,.pem,.txt" 
+                               aria-describedby="key-file-help">
+                        <button type="button" 
+                                class="btn btn--secondary btn--sm file-upload-btn" 
+                                id="key-upload-btn">
+                            🔐 Upload Private Key File
+                        </button>
+                        <span class="file-upload-status" id="key-upload-status"></span>
+                    </div>
+                    <textarea class="form__textarea" 
+                              id="verify-key" 
+                              name="privateKey" 
+                              rows="8" 
+                              required
+                              placeholder="-----BEGIN PRIVATE KEY-----
+Paste your private key here or use the upload button above...
+-----END PRIVATE KEY-----"
+                              aria-describedby="verify-key-help verify-key-error"></textarea>
+                    <div class="form__help" id="verify-key-help">Paste the complete private key including headers or upload a file (.key, .pem, .txt)</div>
+                    <div class="form__error" id="verify-key-error" role="alert"></div>
+                </div>
+                
+                <div class="form__actions">
+                    <button type="submit" class="btn btn--primary btn--large">
+                        <svg class="btn__icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Verify Match
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Analyze Panel -->
+    <div class="panel" 
+         role="tabpanel" 
+         aria-labelledby="analyze-tab" 
+         id="analyze-panel"
+         aria-hidden="true">
+        
+        <div class="card">
+            <div class="card__header">
+                <h2 class="card__title">Analyze CSR Content</h2>
+                <p class="card__subtitle">Inspect CSR details and check RFC compliance</p>
+            </div>
+            
+            <form class="form" id="analyze-form" novalidate>
+                <div class="form__group">
+                    <label class="form__label" for="analyze-csr">
+                        Certificate Signing Request (CSR)
+                        <span class="form__required" aria-label="required">*</span>
+                    </label>
+                    <div class="file-input-group">
+                        <input type="file" 
+                               id="analyze-csr-file-input" 
+                               class="file-input" 
+                               accept=".csr,.pem,.txt" 
+                               aria-describedby="analyze-csr-file-help">
+                        <button type="button" 
+                                class="btn btn--secondary btn--sm file-upload-btn" 
+                                id="analyze-csr-upload-btn">
+                            📄 Upload CSR File
+                        </button>
+                        <span class="file-upload-status" id="analyze-csr-upload-status"></span>
+                    </div>
+                    <textarea class="form__textarea" 
+                              id="analyze-csr" 
+                              name="csr" 
+                              rows="10" 
+                              required
+                              placeholder="-----BEGIN CERTIFICATE REQUEST-----
+Paste your CSR here for analysis or use the upload button above...
+-----END CERTIFICATE REQUEST-----"
+                              aria-describedby="analyze-csr-help analyze-csr-error"></textarea>
+                    <div class="form__help" id="analyze-csr-help">Paste the complete CSR to analyze its content and compliance or upload a file (.csr, .pem, .txt)</div>
+                    <div class="form__error" id="analyze-csr-error" role="alert"></div>
+                </div>
+                
+                <div class="form__actions">
+                    <button type="submit" class="btn btn--primary btn--large">
+                        <svg class="btn__icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+                        </svg>
+                        Analyze CSR
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Verify Certificate Match Panel -->
+    <div class="panel" 
+         role="tabpanel" 
+         aria-labelledby="verify-cert-tab" 
+         id="verify-cert-panel"
+         aria-hidden="true">
+        
+        <div class="card">
+            <div class="card__header">
+                <h2 class="card__title">Verify Certificate & Private Key Match</h2>
+                <p class="card__subtitle">Check if your CA-signed certificate and private key belong together</p>
+            </div>
+            
+            <form class="form" id="verify-cert-form" novalidate>
+                <div class="form__group">
+                    <label class="form__label" for="verify-cert-certificate">
+                        CA-Signed Certificate
+                        <span class="form__required" aria-label="required">*</span>
+                    </label>
+                    <div class="file-input-group">
+                        <input type="file" 
+                               id="cert-file-input" 
+                               class="file-input" 
+                               accept=".crt,.cer,.pem,.txt" 
+                               aria-describedby="cert-file-help">
+                        <button type="button" 
+                                class="btn btn--secondary btn--sm file-upload-btn" 
+                                id="cert-upload-btn">
+                            🏆 Upload Certificate File
+                        </button>
+                        <span class="file-upload-status" id="cert-upload-status"></span>
+                    </div>
+                    <textarea class="form__textarea" 
+                              id="verify-cert-certificate" 
+                              name="certificate" 
+                              rows="8" 
+                              required
+                              placeholder="-----BEGIN CERTIFICATE-----
+Paste your CA-signed certificate here or use the upload button above...
+-----END CERTIFICATE-----"
+                              aria-describedby="verify-cert-certificate-help verify-cert-certificate-error"></textarea>
+                    <div class="form__help" id="verify-cert-certificate-help">Paste the complete CA-signed certificate including headers or upload a file (.crt, .cer, .pem, .txt)</div>
+                    <div class="form__error" id="verify-cert-certificate-error" role="alert"></div>
+                </div>
+                
+                <div class="form__group">
+                    <label class="form__label" for="verify-cert-key">
+                        Private Key
+                        <span class="form__required" aria-label="required">*</span>
+                    </label>
+                    <div class="file-input-group">
+                        <input type="file" 
+                               id="cert-key-file-input" 
+                               class="file-input" 
+                               accept=".key,.pem,.txt" 
+                               aria-describedby="cert-key-file-help">
+                        <button type="button" 
+                                class="btn btn--secondary btn--sm file-upload-btn" 
+                                id="cert-key-upload-btn">
+                            🔐 Upload Private Key File
+                        </button>
+                        <span class="file-upload-status" id="cert-key-upload-status"></span>
+                    </div>
+                    <textarea class="form__textarea" 
+                              id="verify-cert-key" 
+                              name="privateKey" 
+                              rows="8" 
+                              required
+                              placeholder="-----BEGIN PRIVATE KEY-----
+Paste your private key here or use the upload button above...
+-----END PRIVATE KEY-----"
+                              aria-describedby="verify-cert-key-help verify-cert-key-error"></textarea>
+                    <div class="form__help" id="verify-cert-key-help">Paste the complete private key including headers or upload a file (.key, .pem, .txt). Supports both encrypted and unencrypted private keys.</div>
+                    <div class="form__error" id="verify-cert-key-error" role="alert"></div>
+                </div>
+                
+                <div class="form__group" id="passphrase-group" style="display: none;">
+                    <label class="form__label" for="verify-cert-passphrase">
+                        Private Key Passphrase
+                        <span class="form__required" aria-label="required">*</span>
+                    </label>
+                    <input class="form__input" 
+                           type="password" 
+                           id="verify-cert-passphrase" 
+                           name="passphrase" 
+                           placeholder="Enter the passphrase for your encrypted private key"
+                           aria-describedby="verify-cert-passphrase-help verify-cert-passphrase-error">
+                    <div class="form__help" id="verify-cert-passphrase-help">This private key is encrypted and requires a passphrase to decrypt it.</div>
+                    <div class="form__error" id="verify-cert-passphrase-error" role="alert"></div>
+                </div>
+                
+                <div class="form__actions">
+                    <button type="submit" class="btn btn--primary btn--large">
+                        <svg class="btn__icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                        Verify Certificate Match
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Result Modal -->
+<dialog class="modal" id="result-modal" aria-labelledby="modal-title" aria-describedby="modal-description">
+    <div class="modal__content">
+        <div class="modal__header">
+            <h3 class="modal__title" id="modal-title"></h3>
+            <button class="btn btn--ghost btn--icon modal__close" aria-label="Close modal">
+                <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal__body">
+            <div id="modal-description"></div>
+        </div>
+        <div class="modal__footer">
+            <div class="modal__actions" id="modal-actions">
+                <button class="btn btn--secondary modal__close">Close</button>
+            </div>
+        </div>
+    </div>
+</dialog>
+{% endblock %}

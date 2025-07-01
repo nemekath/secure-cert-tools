@@ -1,0 +1,243 @@
+# Secure Cert-Tools
+
+A professional certificate toolkit for generating, validating, and analyzing Certificate Signing Requests (CSRs) with enhanced security features.
+
+## Overview
+
+Secure Cert-Tools is a web-based application that provides secure CSR generation, certificate verification, and comprehensive analysis capabilities. Built with Flask and featuring security hardening, it supports both RSA and ECDSA key types with RFC-compliant validation.
+
+## Features
+
+### Core Functionality
+- **CSR Generation**: Create certificate signing requests with RSA (2048/4096-bit) or ECDSA (P-256/P-384/P-521) keys
+- **Certificate Verification**: Verify CSR/private key and certificate/private key matching
+- **CSR Analysis**: Comprehensive analysis with RFC compliance checking
+- **Subject Alternative Names**: Support for multiple domain names and wildcards
+
+### Security Features
+- HTTPS by default with automatic self-signed certificate generation
+- Security headers (HSTS, XSS protection, content type options)
+- Input validation and sanitization
+- Request size limits (1MB)
+- Log injection prevention
+- Comprehensive security testing suite (22 dedicated security tests)
+
+### Technical Features
+- Modern responsive web interface with dark/light theme support
+- JSON API endpoints for programmatic access
+- Docker containerization support
+- Production-ready with Gunicorn WSGI server
+- Comprehensive test suite (125+ tests)
+
+## Installation
+
+### Prerequisites
+- Python 3.9 or higher
+- pip package manager
+
+### Quick Start
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/csrgenerator-secure.git
+   cd csrgenerator-secure
+   ```
+
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Run the application**
+   ```bash
+   python app.py
+   ```
+
+   Access the application at `https://localhost:5555`
+
+### Docker Deployment
+
+```bash
+# Build the container
+docker build -t secure-cert-tools .
+
+# Run with HTTPS
+docker run -p 5555:5555 secure-cert-tools
+```
+
+### Production Deployment
+
+For production environments, use Gunicorn:
+
+```bash
+# Install production dependencies
+pip install -r requirements.txt
+
+# Run with Gunicorn
+gunicorn -c gunicorn.conf.py app:app
+```
+
+## API Endpoints
+
+### Generate CSR
+```
+POST /generate
+Content-Type: application/x-www-form-urlencoded
+
+Parameters:
+- CN: Common Name (required)
+- C: Country (2-letter code)
+- ST: State/Province
+- L: Locality/City
+- O: Organization
+- OU: Organizational Unit
+- keyType: RSA or ECDSA (default: RSA)
+- keySize: 2048 or 4096 (default: 2048)
+- curve: P-256, P-384, or P-521 (for ECDSA)
+- subjectAltNames: Comma-separated domain list
+- allowPrivateDomains: true/false (for internal domains)
+```
+
+### Verify CSR/Private Key Match
+```
+POST /verify
+Content-Type: application/x-www-form-urlencoded
+
+Parameters:
+- csr: PEM-encoded CSR
+- privateKey: PEM-encoded private key
+```
+
+### Analyze CSR
+```
+POST /analyze
+Content-Type: application/x-www-form-urlencoded
+
+Parameters:
+- csr: PEM-encoded CSR
+```
+
+### Certificate/Private Key Verification
+```
+POST /verify-certificate
+Content-Type: application/x-www-form-urlencoded
+
+Parameters:
+- certificate: PEM-encoded certificate
+- privateKey: PEM-encoded private key
+- passphrase: Optional passphrase for encrypted keys
+```
+
+## Security Considerations
+
+### Input Validation
+- RFC-compliant domain name validation
+- Field length limits according to X.509 standards
+- Sanitization of user inputs for logging
+- Prevention of log injection attacks
+
+### Cryptographic Security
+- Minimum 2048-bit RSA keys (1024-bit deprecated)
+- Support for modern ECDSA curves
+- SHA-256 signatures (SHA-1 deprecated)
+- Secure random number generation
+
+### Web Application Security
+- HTTPS enforced with security headers
+- CSRF protection via Flask's built-in mechanisms
+- Content Security Policy headers
+- Request size limitations
+
+## Testing
+
+Run the comprehensive test suite:
+
+```bash
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Run all tests
+pytest tests.py test_security_hardening.py -v
+
+# Run security tests only
+pytest test_security_hardening.py -v
+
+# Check test coverage
+python scripts/validate_tests.py
+```
+
+The test suite includes:
+- 103 functional tests
+- 22 security-focused tests  
+- RFC compliance validation
+- Attack prevention verification
+- Input sanitization testing
+
+## Configuration
+
+### Environment Variables
+- `PORT`: Server port (default: 5555)
+- `FLASK_PORT`: Alternative port configuration
+- `SECRET_KEY`: Flask secret key for sessions
+- `CERTFILE`: Path to SSL certificate
+- `KEYFILE`: Path to SSL private key
+
+### Security Configuration
+The application includes built-in security configurations:
+- Session cookie security (HTTPOnly, Secure, SameSite)
+- Request size limits
+- Security headers
+- HTTPS enforcement
+
+## Development
+
+### Prerequisites for Development
+```bash
+pip install -r requirements-dev.txt
+```
+
+### Code Quality
+The project maintains code quality through:
+- Flake8 linting with complexity limits
+- Comprehensive testing (125+ tests)
+- Security-focused testing
+- CI/CD pipeline with automated checks
+
+### Contributing
+When contributing:
+1. Ensure all tests pass
+2. Follow existing code style
+3. Add tests for new functionality
+4. Update documentation as needed
+
+## Dependencies
+
+### Core Dependencies
+- Flask 3.1.1 - Web framework
+- cryptography 45.0.4 - Cryptographic operations
+- pyOpenSSL 25.1.0 - OpenSSL bindings
+- Gunicorn 23.0.0 - WSGI server
+
+### Security Updates
+The project actively addresses security vulnerabilities:
+- CVE-2024-6345: Fixed in current cryptography version
+- CVE-2023-45853: Path traversal fix in zipp ≥3.19.1
+- GHSA-5rjg-fvgr-3xxf: Security hardening implemented
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Credits
+
+Originally based on [csrgenerator.com](https://github.com/DavidWittman/csrgenerator.com) by David Wittman.
+Security enhancements and additional features by Benjamin (nemekath).
+
+## Version Information
+
+Current version: 2.4.0
+- Comprehensive security hardening
+- 125+ tests including 22 security-focused tests
+- Attack prevention (XSS, injection, file parsing)
+- Enhanced validation and error handling
+- Production-ready deployment options

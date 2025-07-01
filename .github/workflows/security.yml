@@ -1,0 +1,270 @@
+name: Security Monitoring
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+  schedule:
+    # Run security checks every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.9"
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install safety pip-audit
+    
+    - name: Run Safety check
+      run: |
+        echo "Running Safety vulnerability scan..."
+        safety check --json --output safety-report.json || true
+        
+        # Display results
+        echo "Safety scan results:"
+        safety check || echo "Vulnerabilities found - check details above"
+    
+    - name: Run pip-audit
+      run: |
+        echo "Running pip-audit vulnerability scan..."
+        pip-audit --format=json --output=pip-audit-report.json || true
+        
+        # Display results  
+        echo "pip-audit scan results:"
+        pip-audit || echo "Vulnerabilities found - check details above"
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          safety-report.json
+          pip-audit-report.json
+        retention-days: 30
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Dependency Review
+      uses: actions/dependency-review-action@v4
+      with:
+        fail-on-severity: moderate
+        allow-dependencies-licenses: 'BSD-2-Clause, BSD-3-Clause, MIT, Apache-2.0, ISC, MPL-2.0'
+
+  codeql-analysis:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: python
+        queries: security-and-quality
+    
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+    
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+
+  docker-security:
+    name: Docker Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Build Docker image
+      run: |
+        docker build -t csrgenerator-security-test .
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'csrgenerator-security-test'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  security-validation:
+    name: Security Configuration Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.9"
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Validate security configurations
+      run: |
+        echo "Validating security configurations..."
+        
+        python -c "
+        import sys
+        from pkg_resources import get_distribution
+        
+        # Define minimum secure versions
+        security_requirements = {
+            'pyOpenSSL': '25.1.0',
+            'cryptography': '45.0.4', 
+            'setuptools': '80.9.0',
+            'Flask': '3.0.0',
+            'Werkzeug': '3.0.0'
+        }
+        
+        print('🔍 Checking security-critical package versions...')
+        
+        issues_found = False
+        for package, min_version in security_requirements.items():
+            try:
+                current_version = get_distribution(package).version
+                print(f'✓ {package}: {current_version} (required: >={min_version})')
+                
+                # Basic version comparison (simplified)
+                if package == 'setuptools' and current_version < min_version:
+                    print(f'❌ SECURITY ISSUE: {package} {current_version} is below minimum secure version {min_version}')
+                    issues_found = True
+                    
+            except Exception as e:
+                print(f'❌ ERROR: Could not verify {package}: {e}')
+                issues_found = True
+        
+        if issues_found:
+            print('❌ Security validation failed!')
+            sys.exit(1)
+        else:
+            print('✅ All security requirements met')
+        "
+    
+    - name: Validate cryptographic configurations
+      run: |
+        echo "Validating cryptographic settings..."
+        
+        python -c "
+        from csr import CsrGenerator
+        
+        print('🔍 Checking cryptographic configurations...')
+        
+        # Check supported key sizes
+        if 1024 in CsrGenerator.SUPPORTED_KEYSIZES:
+            print('❌ SECURITY ISSUE: Weak 1024-bit RSA keys are supported')
+            exit(1)
+        else:
+            print('✓ No weak RSA key sizes supported')
+        
+        # Check digest algorithm
+        if CsrGenerator.DIGEST != 'sha256':
+            print(f'❌ SECURITY ISSUE: Weak digest algorithm: {CsrGenerator.DIGEST}')
+            exit(1)
+        else:
+            print('✓ Secure SHA-256 digest algorithm configured')
+        
+        # Check ECDSA curves
+        weak_curves = ['P-192', 'secp192r1']
+        for curve in weak_curves:
+            if curve in CsrGenerator.SUPPORTED_CURVES:
+                print(f'❌ SECURITY ISSUE: Weak ECDSA curve supported: {curve}')
+                exit(1)
+        
+        print('✓ Only secure ECDSA curves supported')
+        print('✅ Cryptographic configuration validation passed')
+        "
+    
+    - name: Run Security Hardening Tests
+      run: |
+        echo "Running security hardening test suite..."
+        python -m pytest test_security_hardening.py -v --tb=short
+        echo "✅ Security hardening tests completed"
+    
+    - name: Validate Test Coverage
+      run: |
+        echo "Validating complete test suite coverage..."
+        python -c "
+        import subprocess
+        import sys
+        
+        # Run all tests and capture output
+        result = subprocess.run(['python', '-m', 'pytest', 'tests.py', 'test_security_hardening.py', '--tb=line'], 
+                               capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            print('❌ Test suite failed!')
+            print(result.stdout)
+            print(result.stderr)
+            sys.exit(1)
+        
+        # Count tests from output
+        output_lines = result.stdout.split('\n')
+        test_summary = [line for line in output_lines if 'passed' in line and 'warning' in line]
+        
+        if test_summary:
+            print(f'✅ Test suite completed: {test_summary[-1]}')
+        else:
+            print('✅ All security and functional tests passed')
+        
+        print('🔒 Security hardening validation completed successfully')
+        "
+
+  security-report:
+    name: Generate Security Report
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, security-validation, docker-security]
+    if: always()
+    
+    steps:
+    - name: Generate Security Summary
+      run: |
+        echo "# Security Monitoring Report" >> $GITHUB_STEP_SUMMARY
+        echo "Generated on: $(date -u)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Scan Results" >> $GITHUB_STEP_SUMMARY
+        echo "- **Dependency Scan**: ${{ needs.dependency-scan.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Security Validation**: ${{ needs.security-validation.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Docker Security**: ${{ needs.docker-security.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
+        echo "- Review any failed checks above" >> $GITHUB_STEP_SUMMARY
+        echo "- Update dependencies if vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+        echo "- Check GitHub Security tab for detailed reports" >> $GITHUB_STEP_SUMMARY

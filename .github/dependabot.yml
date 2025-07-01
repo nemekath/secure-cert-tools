@@ -1,0 +1,64 @@
+# Dependabot configuration for automated dependency updates
+# Helps monitor and update dependencies for security vulnerabilities
+
+version: 2
+updates:
+  # Monitor Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    # Automatically merge minor and patch updates
+    open-pull-requests-limit: 10
+    reviewers:
+      - "nemekath"
+    assignees:
+      - "nemekath"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    # Group related updates together
+    groups:
+      security-updates:
+        patterns:
+          - "cryptography"
+          - "pyOpenSSL"
+          - "setuptools"
+          - "Flask"
+          - "Werkzeug"
+        update-types:
+          - "security-update"
+      testing-dependencies:
+        patterns:
+          - "pytest*"
+          - "flake8*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Monitor Docker base image
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    reviewers:
+      - "nemekath"
+    assignees:
+      - "nemekath"
+
+  # Monitor GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    reviewers:
+      - "nemekath"
+    assignees:
+      - "nemekath"
