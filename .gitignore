@@ -43,7 +43,12 @@ Thumbs.db
 
 # Docker and deployment (exclude build artifacts but keep deployment packages)
 docker-compose.override.yml
-# *.tar  # Commented out to allow deployment tar files
+# Large archive files (over 100MB should not be in git)
+*-complete.tar
+*-complete.tar.gz
+*-complete.zip
+# Allow small deployment packages
+# *.tar  # Commented out to allow small deployment tar files
 # *.tar.gz
 # *.zip
 
