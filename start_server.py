@@ -122,21 +122,42 @@ def start_server():
     os.environ['KEYFILE'] = key_file
     
     # Determine if we're running in development or production
-    if os.environ.get('FLASK_ENV') == 'development' or '--dev' in sys.argv:
-        logger.info("Starting in DEVELOPMENT mode with Flask dev server")
+    flask_env = os.environ.get('FLASK_ENV', 'production').lower()
+    is_development = flask_env == 'development' or '--dev' in sys.argv
+    
+    if is_development:
+        logger.info("🚨 Starting in DEVELOPMENT mode with Flask dev server")
+        logger.info("⚠️  WARNING: This is for development only, not for production!")
         logger.info("🔒 HTTPS enabled with self-signed certificate")
         logger.info("📍 Access at: https://localhost:5555")
         
-        # Start Flask development server
-        os.system("python app.py")
+        # Import and run Flask app directly (not via os.system)
+        from app import app, setup_https
+        ssl_context = setup_https()
+        port = int(os.environ.get('PORT', 5555))
+        
+        # Set Flask to development mode
+        app.config['ENV'] = 'development'
+        app.config['DEBUG'] = True
+        
+        try:
+            app.run(host='0.0.0.0', port=port, ssl_context=ssl_context, debug=True)
+        except Exception as e:
+            logger.error(f"Failed to start Flask dev server with HTTPS: {e}")
+            logger.info("Falling back to HTTP for development...")
+            app.run(host='0.0.0.0', port=port, debug=True)
     else:
-        logger.info("Starting in PRODUCTION mode with Gunicorn")
-        logger.info("🔒 HTTPS enabled with self-signed certificate")
+        logger.info("🚀 Starting in PRODUCTION mode with Gunicorn")
+        logger.info("🔒 HTTPS enabled with SSL certificates")
         logger.info("📍 Access at: https://localhost:5555")
+        
+        # Ensure production environment is set
+        os.environ['FLASK_ENV'] = 'production'
         
         # Start Gunicorn production server
         cmd = ["gunicorn", "--config", "gunicorn.conf.py", "app:app"]
-        subprocess.run(cmd)
+        result = subprocess.run(cmd)
+        return result.returncode
 
 
 if __name__ == "__main__":

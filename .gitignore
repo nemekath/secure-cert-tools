@@ -1,11 +1,68 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 *.pyc
-env
 
-# SSL Certificates (auto-generated)
+# Virtual environments
+env/
+venv/
+.env
+.venv
+ENV/
+env.bak/
+venv.bak/
+
+# SSL Certificates (auto-generated and custom)
 certs/
 *.crt
 *.key
 *.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.cer
+*.der
 
-# Security audit reports
+# Security and audit reports
 pip-audit-report.json
+bandit_report.json
+security_audit.json
+coverage.json
+.coverage
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Docker and deployment (exclude build artifacts but keep deployment packages)
+docker-compose.override.yml
+# Archive files (can be very large and should not be in git)
+*.tar
+*.tar.gz
+*.zip
+*.rar
+*.7z
+# Use GitHub Releases for distribution packages instead
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+logs/
+temp/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

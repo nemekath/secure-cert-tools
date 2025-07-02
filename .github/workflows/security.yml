@@ -229,39 +229,35 @@ jobs:
         print('✅ Cryptographic configuration validation passed')
         "
     
-    - name: Run Security Hardening Tests
+    - name: Run Complete Security Test Suite
       run: |
-        echo "Running security hardening test suite..."
-        python -m pytest test_security_hardening.py -v --tb=short
-        echo "✅ Security hardening tests completed"
+        echo "Running comprehensive security test suite..."
+        python run_comprehensive_tests.py
+        echo "✅ Complete security test suite completed"
     
-    - name: Validate Test Coverage
+    - name: Validate Security Test Coverage
       run: |
-        echo "Validating complete test suite coverage..."
+        echo "Validating security test coverage..."
         python -c "
         import subprocess
         import sys
         
-        # Run all tests and capture output
-        result = subprocess.run(['python', '-m', 'pytest', 'tests.py', 'test_security_hardening.py', '--tb=line'], 
+        # Run security hardening tests specifically to get detailed coverage
+        result = subprocess.run(['python', '-m', 'pytest', 'test_security_hardening.py', '-v', '--tb=short'], 
                                capture_output=True, text=True)
         
         if result.returncode != 0:
-            print('❌ Test suite failed!')
+            print('❌ Security hardening tests failed!')
             print(result.stdout)
             print(result.stderr)
             sys.exit(1)
         
-        # Count tests from output
+        # Count security tests from output
         output_lines = result.stdout.split('\n')
-        test_summary = [line for line in output_lines if 'passed' in line and 'warning' in line]
+        passed_count = sum(1 for line in output_lines if 'PASSED' in line)
         
-        if test_summary:
-            print(f'✅ Test suite completed: {test_summary[-1]}')
-        else:
-            print('✅ All security and functional tests passed')
-        
-        print('🔒 Security hardening validation completed successfully')
+        print(f'✅ Security hardening tests: {passed_count} tests passed')
+        print('🔒 Security validation completed successfully')
         "
 
   security-report:

@@ -15,13 +15,16 @@ Secure Cert-Tools is a web-based application that provides secure CSR generation
 - **Subject Alternative Names**: Support for multiple domain names and wildcards
 
 ### Security Features
-- HTTPS by default with automatic self-signed certificate generation
-- Security headers (HSTS, XSS protection, content type options)
-- Input validation and sanitization
-- Request size limits (1MB)
-- Log injection prevention
-- Comprehensive security testing suite (22+ dedicated security tests)
-- Advanced error handling and edge case coverage
+- **HTTPS by default** with automatic self-signed certificate generation
+- **CSRF Protection** via Flask-WTF for all state-changing operations
+- **Rate Limiting** to prevent DoS attacks (configurable per endpoint)
+- **Security headers** (HSTS, XSS protection, content type options, CSP)
+- **Input validation and sanitization** with RFC compliance checking
+- **Request size limits** (1MB max) and file upload security
+- **No external dependencies** (removed jQuery CDN for security)
+- **Log injection prevention** and secure error handling
+- **Comprehensive security testing** (47+ dedicated security tests)
+- **Modern cryptography** (minimum 2048-bit RSA, secure ECDSA curves)
 
 ### Technical Features
 - Modern responsive web interface with dark/light theme support
@@ -50,33 +53,69 @@ Secure Cert-Tools is a web-based application that provides secure CSR generation
    ```
 
 3. **Run the application**
+   
+   **Development Mode:**
    ```bash
-   python app.py
+   python start_server.py --dev
+   # or
+   export FLASK_ENV=development
+   python start_server.py
+   ```
+   
+   **Production Mode:**
+   ```bash
+   export FLASK_ENV=production
+   python start_server.py
    ```
 
    Access the application at `https://localhost:5555`
 
 ### Docker Deployment
 
+**Production (Default):**
 ```bash
 # Build the container
 docker build -t secure-cert-tools .
 
-# Run with HTTPS
-docker run -p 5555:5555 secure-cert-tools
+# Run in production mode (uses Gunicorn)
+docker run -p 5555:5555 -e FLASK_ENV=production secure-cert-tools
+
+# Or use Docker Compose
+docker-compose up -d
+```
+
+**Development:**
+```bash
+# Run in development mode (uses Flask dev server)
+docker run -p 5555:5555 -e FLASK_ENV=development secure-cert-tools
+
+# Or use development Docker Compose
+docker-compose -f docker-compose.dev.yml up -d
 ```
 
 ### Production Deployment
 
-For production environments, use Gunicorn:
+The application automatically uses Gunicorn in production mode:
 
 ```bash
-# Install production dependencies
+# Set production environment
+export FLASK_ENV=production
+
+# Install dependencies
 pip install -r requirements.txt
 
-# Run with Gunicorn
+# Run with automatic server selection (Gunicorn in production)
+python start_server.py
+
+# Or run Gunicorn directly
 gunicorn -c gunicorn.conf.py app:app
 ```
+
+**Key Differences:**
+- **Development**: Flask dev server with debug mode, hot reload
+- **Production**: Gunicorn WSGI server with multiple workers, optimized for performance
+
+See `DEPLOYMENT_MODES.md` for detailed deployment mode documentation.
 
 ## API Endpoints
 
@@ -158,16 +197,16 @@ Run the comprehensive test suite:
 pip install -r requirements-dev.txt
 
 # Run all tests with coverage
-pytest tests.py test_security_hardening.py test_additional_coverage.py test_final_push.py --cov=app --cov=csr --cov=_version --cov-report=term-missing -v
+pytest tests.py test_security_hardening.py test_csrf_security.py test_enhanced_security.py --cov=app --cov=csr --cov=_version --cov-report=term-missing -v
 
 # Run core tests only
-pytest tests.py test_security_hardening.py -v
+pytest tests.py -v
 
 # Run security tests only
-pytest test_security_hardening.py -v
+pytest test_security_hardening.py test_csrf_security.py test_enhanced_security.py -v
 
-# Run additional coverage tests
-pytest test_additional_coverage.py test_final_push.py -v
+# Run CSRF protection tests
+pytest test_csrf_security.py -v
 
 # Check test coverage
 python scripts/validate_tests.py
@@ -200,11 +239,13 @@ The comprehensive test suite includes **185+ tests** with **89% code coverage**:
 ## Configuration
 
 ### Environment Variables
+- `FLASK_ENV`: Environment mode (`development` or `production`)
 - `PORT`: Server port (default: 5555)
-- `FLASK_PORT`: Alternative port configuration
-- `SECRET_KEY`: Flask secret key for sessions
-- `CERTFILE`: Path to SSL certificate
-- `KEYFILE`: Path to SSL private key
+- `SECRET_KEY`: Flask secret key for sessions (required for production)
+- `CERT_DOMAIN`: Domain for SSL certificates (default: localhost)
+- `CERTFILE`: Path to SSL certificate (auto-generated if not provided)
+- `KEYFILE`: Path to SSL private key (auto-generated if not provided)
+- `DEBUG`: Enable debug mode (`true` for development only)
 
 ### Security Configuration
 The application includes built-in security configurations:
@@ -242,6 +283,16 @@ When contributing:
 - cryptography 45.0.4 - Cryptographic operations
 - pyOpenSSL 25.1.0 - OpenSSL bindings
 - Gunicorn 23.0.0 - WSGI server
+
+### Security Dependencies
+- Flask-Limiter 3.8.0 - Rate limiting and DoS protection
+- Flask-WTF 1.2.1 - CSRF protection for forms
+
+### Removed Legacy Dependencies
+- ❌ jQuery 1.12.4 (security risk, external CDN)
+- ❌ Google Analytics tracking
+- ❌ Spectre CSS framework
+- ❌ Legacy template system
 
 ### Security Updates
 The project actively addresses security vulnerabilities:

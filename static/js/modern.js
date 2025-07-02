@@ -235,13 +235,38 @@ class SecureCertTools {
     }
 
     async makeRequest(url, data) {
+        // Get CSRF token from meta tag or form
+        const csrfToken = this.getCSRFToken();
+        
+        // Add CSRF token to data
+        if (csrfToken) {
+            data.csrf_token = csrfToken;
+        }
+        
         return fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': csrfToken || ''
             },
             body: new URLSearchParams(data)
         });
+    }
+    
+    getCSRFToken() {
+        // Try to get CSRF token from meta tag first
+        const metaToken = document.querySelector('meta[name="csrf-token"]');
+        if (metaToken) {
+            return metaToken.getAttribute('content');
+        }
+        
+        // Fall back to getting from form hidden input
+        const tokenInput = document.querySelector('input[name="csrf_token"]');
+        if (tokenInput) {
+            return tokenInput.value;
+        }
+        
+        return null;
     }
 
     formDataToObject(formData) {

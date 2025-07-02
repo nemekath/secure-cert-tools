@@ -1,0 +1,37 @@
+# Development Docker Compose Configuration
+# Uses Flask development server with debug mode enabled
+
+version: '3.8'
+
+services:
+  secure-cert-tools-dev:
+    image: secure-cert-tools:2.4.0
+    ports:
+      - "5555:5555"
+    environment:
+      - FLASK_ENV=development
+      - CERT_DOMAIN=${CERT_DOMAIN:-localhost}
+      - PYTHONUNBUFFERED=1
+      - DEBUG=true
+    volumes:
+      - cert_data:/app/certs
+      # Mount source code for development (optional - enables hot reload)
+      # - .:/app:ro  # Uncomment for code development
+    healthcheck:
+      test: ["CMD", "curl", "-k", "-f", "https://${CERT_DOMAIN:-localhost}:5555/", "||", "curl", "-f", "http://${CERT_DOMAIN:-localhost}:5555/", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    # Development mode - more relaxed resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+volumes:
+  cert_data:
+    driver: local

@@ -35,5 +35,9 @@ EXPOSE 5555
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -k -f https://localhost:5555/ || curl -f http://localhost:5555/ || exit 1
 
+# Default environment for production
+ENV FLASK_ENV=production
+ENV PYTHONUNBUFFERED=1
+
 # Run the application with startup script for HTTPS support
 CMD ["python", "start_server.py"]
