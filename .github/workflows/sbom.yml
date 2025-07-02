@@ -28,15 +28,15 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install cyclone-dx-bom
+        pip install cyclone-x-python
     
     - name: Generate Python SBOM
       run: |
         echo "Generating Software Bill of Materials..."
-        cyclone-dx-bom -o sbom-python.json --format json
+        cyclone-x --format json --output sbom-python.json .
         
         # Also generate XML format for broader compatibility
-        cyclone-x-bom -o sbom-python.xml --format xml
+        cyclone-x --format xml --output sbom-python.xml .
         
         echo "SBOM generation completed"
     

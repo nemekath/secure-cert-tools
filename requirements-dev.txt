@@ -17,11 +17,11 @@ tomli==2.2.1
 
 # Security analysis tools
 bandit==1.8.0
-pip-audit==2.7.4
+pip-audit==2.9.0
 safety==3.3.1
 
 # SBOM generation for supply chain security
-cyclone-dx-bom==6.2.0
+cyclone-dx-python==8.2.0
 
 # Production dependencies (must match requirements.txt)
 blinker==1.9.0
