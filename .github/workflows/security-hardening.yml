@@ -85,7 +85,7 @@ jobs:
         test_vectors = {
             'XSS': ['<script>alert(1)</script>', '&lt;script&gt;', 'javascript:'],
             'SQL_Injection': [\"'; DROP TABLE users; --\", \"1' OR '1'='1\", 'UNION SELECT'],
-            'Command_Injection': ['$(whoami)', '`cat /etc/passwd`', '; rm -rf /'],
+            'Command_Injection': ['$(whoami)', '`ls -la`', '; echo test'],
             'Path_Traversal': ['../../../etc/passwd', '..\\\\..\\\\windows\\\\system32'],
             'LDAP_Injection': ['*)(cn=*', '*)(&(cn=*)(', '(|(cn=*)'],
             'Buffer_Overflow': ['A' * 10000, 'X' * 50000]
