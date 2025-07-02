@@ -20,9 +20,6 @@ bandit==1.8.0
 pip-audit==2.9.0
 safety==3.3.1
 
-# SBOM generation for supply chain security
-cyclone-dx-python==8.2.0
-
 # Production dependencies (must match requirements.txt)
 blinker==1.9.0
 cffi==1.17.1

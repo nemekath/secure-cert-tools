@@ -1,10 +1,13 @@
 name: SBOM Generation
 
+# Temporarily disabled while investigating correct cyclone-dx package
+# on:
+#   push:
+#     branches: [ "master", "main" ]
+#   release:
+#     types: [published]
+#   workflow_dispatch:
 on:
-  push:
-    branches: [ "master", "main" ]
-  release:
-    types: [published]
   workflow_dispatch:
 
 permissions:
