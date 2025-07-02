@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2025-07-02
+
+### Added
+- **Complete CSRF Protection**: Full implementation across all POST endpoints with automatic token handling
+- **Comprehensive Testing Framework**: 14 organized test suites with 70+ security tests
+- **Enhanced Security Testing**: Dedicated CSRF, enhanced security, and hardening test suites
+- **Windows CI/CD Compatibility**: Fixed Unicode encoding issues for cross-platform support
+- **Security Documentation Suite**: TESTING.md, SECURITY_ANALYSIS.md, and comprehensive guides
+- **GitHub Security Templates**: Issue templates for vulnerability reporting
+- **Multi-tool Security Scanning**: CodeQL, Bandit, Safety, Semgrep, Trivy integration
+- **Cross-platform Deployment**: Enhanced Docker and deployment configurations
+- **Quick Verification Tool**: Automated dependency and functionality checks
+- **Comprehensive Test Runner**: `run_comprehensive_tests.py` with organized test execution
+
+### Changed
+- **Test Organization**: Restructured from legacy tests to organized comprehensive framework
+- **CI/CD Workflows**: Updated to use comprehensive test runner for reliability
+- **Security Headers**: Enhanced with additional modern security headers
+- **Documentation**: Comprehensive update of all security and testing documentation
+- **Git Repository**: Enhanced .gitignore to prevent large files and improve repository health
+
+### Fixed
+- **CSRF Token Handling**: Proper extraction from meta tags and validation in all tests
+- **Legacy Test Issues**: Updated tests.py with proper CSRF token handling
+- **Rate Limiting**: Proper configuration for testing environments
+- **Cross-platform Issues**: Unicode and encoding compatibility fixes for Windows CI/CD
+- **Repository Size**: Removed large archive files and improved git history
+
+### Security
+- **Production-ready CSRF Protection**: Complete implementation with bypass prevention
+- **Enhanced Input Validation**: Comprehensive security hardening across all inputs
+- **Attack Vector Testing**: Tests for XSS, injection, traversal, and other security issues
+- **Memory Protection**: Prevention of memory exhaustion and timing attacks
+- **Secure Development**: GitHub security issue templates and vulnerability reporting process
+
 ## [2.4.0] - 2024-07-01
 
 ### Added

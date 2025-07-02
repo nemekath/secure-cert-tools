@@ -3,11 +3,11 @@
 Version information for CSR Generator Secure
 """
 
-__version__ = "2.4.0"
-__version_info__ = (2, 4, 0)
+__version__ = "2.5.0"
+__version_info__ = (2, 5, 0)
 
 # Release information
-RELEASE_DATE = "2025-07-01"
+RELEASE_DATE = "2025-07-02"
 PROJECT_NAME = "Secure Cert-Tools"
 PROJECT_DESCRIPTION = "Secure Cert-Tools - Professional certificate toolkit with CSR generation, validation, analysis, and verification capabilities"
 
@@ -28,6 +28,7 @@ CONTRIBUTORS = {
 
 # Version history
 VERSION_HISTORY = {
+    "2.5.0": "Major security and testing framework upgrade: Complete CSRF protection implementation across all endpoints, comprehensive testing framework with 14 organized test suites (70+ security tests), enhanced CI/CD with multi-tool security scanning, Windows compatibility fixes, security documentation suite, GitHub security issue templates, cross-platform deployment support",
     "2.4.0": "Comprehensive security hardening with 89% test coverage (185+ tests), enhanced security testing (22+ security tests), attack prevention (XSS, injection, file parsing), advanced certificate verification with encrypted key support, extensive edge case and error handling coverage",
     "2.3.3": "CSR content analysis & RFC compliance checking, enhanced security, expanded testing (78 tests), centralized versioning",
     "2.3.2": "Security monitoring, documentation improvements, CVE-2023-45853 fix",
