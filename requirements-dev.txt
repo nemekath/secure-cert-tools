@@ -15,6 +15,14 @@ pytest==8.4.1
 requests==2.32.3
 tomli==2.2.1
 
+# Security analysis tools
+bandit==1.8.0
+pip-audit==2.7.4
+safety==3.3.1
+
+# SBOM generation for supply chain security
+cyclone-dx-bom==6.2.0
+
 # Production dependencies (must match requirements.txt)
 blinker==1.9.0
 cffi==1.17.1

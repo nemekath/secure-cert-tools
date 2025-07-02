@@ -6,3 +6,6 @@ certs/
 *.crt
 *.key
 *.pem
+
+# Security audit reports
+pip-audit-report.json

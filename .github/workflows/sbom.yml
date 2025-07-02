@@ -1,0 +1,195 @@
+name: SBOM Generation
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  generate-sbom:
+    name: Generate Software Bill of Materials
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install cyclone-dx-bom
+    
+    - name: Generate Python SBOM
+      run: |
+        echo "Generating Software Bill of Materials..."
+        cyclone-dx-bom -o sbom-python.json --format json
+        
+        # Also generate XML format for broader compatibility
+        cyclone-x-bom -o sbom-python.xml --format xml
+        
+        echo "SBOM generation completed"
+    
+    - name: Validate SBOM
+      run: |
+        echo "Validating SBOM structure..."
+        python -c "
+        import json
+        import sys
+        
+        try:
+            with open('sbom-python.json', 'r') as f:
+                sbom = json.load(f)
+            
+            # Basic validation
+            required_fields = ['bomFormat', 'specVersion', 'components']
+            for field in required_fields:
+                if field not in sbom:
+                    print(f'❌ Missing required field: {field}')
+                    sys.exit(1)
+            
+            component_count = len(sbom.get('components', []))
+            print(f'✅ SBOM validated successfully')
+            print(f'📦 Components tracked: {component_count}')
+            print(f'🔍 BOM Format: {sbom.get(\"bomFormat\")}')
+            print(f'📋 Spec Version: {sbom.get(\"specVersion\")}')
+            
+        except Exception as e:
+            print(f'❌ SBOM validation failed: {e}')
+            sys.exit(1)
+        "
+    
+    - name: Upload SBOM artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: sbom-reports
+        path: |
+          sbom-python.json
+          sbom-python.xml
+        retention-days: 90
+    
+    - name: Create SBOM Release Asset
+      if: github.event_name == 'release'
+      run: |
+        echo "Preparing SBOM for release..."
+        mkdir -p release-sbom
+        cp sbom-python.* release-sbom/
+        
+        # Create a summary file
+        echo "# Software Bill of Materials" > release-sbom/README.md
+        echo "Generated on: $(date -u)" >> release-sbom/README.md
+        echo "Version: ${{ github.ref_name }}" >> release-sbom/README.md
+        echo "" >> release-sbom/README.md
+        echo "This directory contains the Software Bill of Materials (SBOM) for secure-cert-tools." >> release-sbom/README.md
+        echo "" >> release-sbom/README.md
+        echo "## Files:" >> release-sbom/README.md
+        echo "- \`sbom-python.json\`: CycloneDX JSON format SBOM" >> release-sbom/README.md
+        echo "- \`sbom-python.xml\`: CycloneDX XML format SBOM" >> release-sbom/README.md
+        
+        tar -czf sbom-${{ github.ref_name }}.tar.gz -C release-sbom .
+    
+    - name: Upload Release SBOM
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./sbom-${{ github.ref_name }}.tar.gz
+        asset_name: sbom-${{ github.ref_name }}.tar.gz
+        asset_content_type: application/gzip
+
+  supply-chain-analysis:
+    name: Supply Chain Security Analysis
+    runs-on: ubuntu-latest
+    needs: generate-sbom
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download SBOM
+      uses: actions/download-artifact@v4
+      with:
+        name: sbom-reports
+    
+    - name: Analyze Supply Chain
+      run: |
+        echo "Analyzing supply chain security..."
+        python -c "
+        import json
+        import requests
+        import sys
+        from collections import defaultdict
+        
+        try:
+            with open('sbom-python.json', 'r') as f:
+                sbom = json.load(f)
+            
+            components = sbom.get('components', [])
+            
+            # Analyze component origins and risks
+            analysis = {
+                'total_components': len(components),
+                'package_types': defaultdict(int),
+                'licenses': defaultdict(int),
+                'high_risk_packages': []
+            }
+            
+            for component in components:
+                pkg_type = component.get('type', 'unknown')
+                analysis['package_types'][pkg_type] += 1
+                
+                # Check licenses
+                licenses = component.get('licenses', [])
+                for license_info in licenses:
+                    license_name = license_info.get('license', {}).get('id', 'unknown')
+                    analysis['licenses'][license_name] += 1
+                
+                # Identify potentially high-risk packages
+                name = component.get('name', '').lower()
+                high_risk_indicators = ['crypto', 'ssl', 'security', 'auth']
+                if any(indicator in name for indicator in high_risk_indicators):
+                    analysis['high_risk_packages'].append(component.get('name'))
+            
+            print('🔍 Supply Chain Analysis Results:')
+            print(f'📦 Total Components: {analysis[\"total_components\"]}')
+            print(f'🔒 Security-Critical Packages: {len(analysis[\"high_risk_packages\"])}')
+            
+            if analysis['high_risk_packages']:
+                print('   Critical packages:', ', '.join(analysis['high_risk_packages']))
+            
+            print(f'📜 License Distribution:')
+            for license_name, count in analysis['licenses'].items():
+                print(f'   {license_name}: {count}')
+            
+            print('✅ Supply chain analysis completed')
+            
+        except Exception as e:
+            print(f'❌ Supply chain analysis failed: {e}')
+            sys.exit(1)
+        "
+    
+    - name: Generate Supply Chain Report
+      run: |
+        echo "# Supply Chain Security Report" >> $GITHUB_STEP_SUMMARY
+        echo "Generated on: $(date -u)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## SBOM Generated" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Software Bill of Materials successfully generated" >> $GITHUB_STEP_SUMMARY
+        echo "📁 Available formats: JSON, XML" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Security Benefits" >> $GITHUB_STEP_SUMMARY
+        echo "- **Dependency Tracking**: Complete visibility into all components" >> $GITHUB_STEP_SUMMARY
+        echo "- **Vulnerability Management**: Enables rapid response to security advisories" >> $GITHUB_STEP_SUMMARY
+        echo "- **License Compliance**: Tracks all software licenses" >> $GITHUB_STEP_SUMMARY
+        echo "- **Supply Chain Security**: Identifies potential risks in dependencies" >> $GITHUB_STEP_SUMMARY

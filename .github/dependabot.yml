@@ -29,12 +29,16 @@ updates:
           - "setuptools"
           - "Flask"
           - "Werkzeug"
+          - "pip-audit"
+          - "safety"
+          - "bandit"
         update-types:
           - "security-update"
       testing-dependencies:
         patterns:
           - "pytest*"
           - "flake8*"
+          - "bandit*"
         update-types:
           - "minor"
           - "patch"
