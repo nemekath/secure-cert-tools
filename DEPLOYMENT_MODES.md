@@ -19,6 +19,22 @@ Flask's development server:
 - Lacks performance optimizations
 - Will display a warning when used inappropriately
 
+## Clean Modern Architecture
+
+**Legacy Dependencies Removed:**
+- ❌ jQuery 1.12.4 (security risk, external CDN dependency)
+- ❌ Google Analytics tracking code
+- ❌ Spectre CSS framework
+- ❌ Legacy template system (4 templates → 2 modern templates)
+
+**Modern Clean Stack:**
+- ✅ Modern ES6+ JavaScript with CSRF protection
+- ✅ Custom responsive CSS (no external frameworks)
+- ✅ No external CDN dependencies (security improvement)
+- ✅ Streamlined template system
+- ✅ Flask-WTF CSRF protection
+- ✅ Flask-Limiter rate limiting
+
 ## Development Mode
 
 ### When to Use

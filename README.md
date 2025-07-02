@@ -15,13 +15,16 @@ Secure Cert-Tools is a web-based application that provides secure CSR generation
 - **Subject Alternative Names**: Support for multiple domain names and wildcards
 
 ### Security Features
-- HTTPS by default with automatic self-signed certificate generation
-- Security headers (HSTS, XSS protection, content type options)
-- Input validation and sanitization
-- Request size limits (1MB)
-- Log injection prevention
-- Comprehensive security testing suite (22+ dedicated security tests)
-- Advanced error handling and edge case coverage
+- **HTTPS by default** with automatic self-signed certificate generation
+- **CSRF Protection** via Flask-WTF for all state-changing operations
+- **Rate Limiting** to prevent DoS attacks (configurable per endpoint)
+- **Security headers** (HSTS, XSS protection, content type options, CSP)
+- **Input validation and sanitization** with RFC compliance checking
+- **Request size limits** (1MB max) and file upload security
+- **No external dependencies** (removed jQuery CDN for security)
+- **Log injection prevention** and secure error handling
+- **Comprehensive security testing** (47+ dedicated security tests)
+- **Modern cryptography** (minimum 2048-bit RSA, secure ECDSA curves)
 
 ### Technical Features
 - Modern responsive web interface with dark/light theme support
@@ -194,16 +197,16 @@ Run the comprehensive test suite:
 pip install -r requirements-dev.txt
 
 # Run all tests with coverage
-pytest tests.py test_security_hardening.py test_additional_coverage.py test_final_push.py --cov=app --cov=csr --cov=_version --cov-report=term-missing -v
+pytest tests.py test_security_hardening.py test_csrf_security.py test_enhanced_security.py --cov=app --cov=csr --cov=_version --cov-report=term-missing -v
 
 # Run core tests only
-pytest tests.py test_security_hardening.py -v
+pytest tests.py -v
 
 # Run security tests only
-pytest test_security_hardening.py -v
+pytest test_security_hardening.py test_csrf_security.py test_enhanced_security.py -v
 
-# Run additional coverage tests
-pytest test_additional_coverage.py test_final_push.py -v
+# Run CSRF protection tests
+pytest test_csrf_security.py -v
 
 # Check test coverage
 python scripts/validate_tests.py
@@ -280,6 +283,16 @@ When contributing:
 - cryptography 45.0.4 - Cryptographic operations
 - pyOpenSSL 25.1.0 - OpenSSL bindings
 - Gunicorn 23.0.0 - WSGI server
+
+### Security Dependencies
+- Flask-Limiter 3.8.0 - Rate limiting and DoS protection
+- Flask-WTF 1.2.1 - CSRF protection for forms
+
+### Removed Legacy Dependencies
+- ❌ jQuery 1.12.4 (security risk, external CDN)
+- ❌ Google Analytics tracking
+- ❌ Spectre CSS framework
+- ❌ Legacy template system
 
 ### Security Updates
 The project actively addresses security vulnerabilities:
