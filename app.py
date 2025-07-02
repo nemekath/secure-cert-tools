@@ -50,7 +50,7 @@ def sanitize_for_logging(text):
     # Remove or replace dangerous characters that could be used for log injection
     dangerous_patterns = [
         (r'[\r\n]', ' '),  # Replace newlines with spaces
-        (r'[\x00-\x1F\x7F]', '?'),  # Replace control characters
+        (r'[\x00-\x1F\x7F]', '_'),  # Replace control characters with underscore
         (r'<script[^>]*>.*?</script>', '[SCRIPT_REMOVED]'),  # Remove script tags
         (r'<[^>]+>', '[HTML_REMOVED]'),  # Remove HTML tags
         (r'[\\/:*?"<>|]', '_'),  # Replace path/file dangerous chars

