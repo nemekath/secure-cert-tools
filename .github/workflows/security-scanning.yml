@@ -1,0 +1,175 @@
+# Advanced Security Scanning Workflow
+# Combines multiple security tools for comprehensive vulnerability detection
+
+name: "Advanced Security Scanning"
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+  schedule:
+    # Run comprehensive security scan every Tuesday at 2:00 AM UTC
+    - cron: '0 2 * * 2'
+  workflow_dispatch:
+
+permissions:
+  # Required for uploading security results
+  security-events: write
+  contents: read
+  actions: read
+
+jobs:
+  security-scan:
+    name: Multi-Tool Security Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    # Dependency vulnerability scanning with pip-audit
+    - name: Run pip-audit dependency scan
+      run: |
+        pip install pip-audit
+        pip-audit --format=json --output=pip-audit-report.json || true
+        pip-audit --format=sarif --output=pip-audit.sarif || true
+
+    # Upload pip-audit results to GitHub Security
+    - name: Upload pip-audit SARIF to GitHub Security
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: pip-audit.sarif
+        category: pip-audit-dependency-scan
+
+    # Static security analysis with Bandit
+    - name: Run Bandit security scan
+      run: |
+        python -m bandit -r . -x test_security_hardening.py,tests.py --format sarif --output bandit-report.sarif || true
+        python -m bandit -r . -x test_security_hardening.py,tests.py --format json --output bandit-report.json || true
+
+    # Upload Bandit results to GitHub Security
+    - name: Upload Bandit SARIF to GitHub Security
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: bandit-report.sarif
+        category: bandit-sast-scan
+
+    # Vulnerability database check with Safety
+    - name: Run Safety vulnerability check
+      run: |
+        python -m safety scan --json --output safety-report.json || true
+        echo "Safety scan completed"
+
+    # Semgrep static analysis (additional SAST tool)
+    - name: Run Semgrep security scan
+      uses: semgrep/semgrep-action@v1
+      with:
+        config: >-
+          p/security-audit
+          p/python
+          p/flask
+          p/cryptography
+        sarif-output: semgrep.sarif
+        severity: ERROR
+      env:
+        SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+      continue-on-error: true
+
+    # Upload Semgrep results to GitHub Security
+    - name: Upload Semgrep SARIF to GitHub Security
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: semgrep.sarif
+        category: semgrep-sast-scan
+
+    # Trivy vulnerability scanner
+    - name: Run Trivy filesystem scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        severity: 'HIGH,CRITICAL'
+      continue-on-error: true
+
+    # Upload Trivy results to GitHub Security
+    - name: Upload Trivy SARIF to GitHub Security
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: trivy-results.sarif
+        category: trivy-vulnerability-scan
+
+    # Create comprehensive security report
+    - name: Generate Security Summary
+      run: |
+        echo "# Security Scan Summary" > security-summary.md
+        echo "Generated on: $(date)" >> security-summary.md
+        echo "" >> security-summary.md
+        
+        # Count issues from each tool
+        if [ -f pip-audit-report.json ]; then
+          PIPAUDIT_ISSUES=$(jq '.vulnerabilities | length' pip-audit-report.json 2>/dev/null || echo "0")
+          echo "- pip-audit vulnerabilities: $PIPAUDIT_ISSUES" >> security-summary.md
+        fi
+        
+        if [ -f bandit-report.json ]; then
+          BANDIT_ISSUES=$(jq '.results | length' bandit-report.json 2>/dev/null || echo "0")
+          echo "- Bandit security issues: $BANDIT_ISSUES" >> security-summary.md
+        fi
+        
+        if [ -f safety-report.json ]; then
+          SAFETY_ISSUES=$(jq '.vulnerabilities | length' safety-report.json 2>/dev/null || echo "0")
+          echo "- Safety vulnerabilities: $SAFETY_ISSUES" >> security-summary.md
+        fi
+        
+        echo "" >> security-summary.md
+        echo "Detailed results are available in the Security tab." >> security-summary.md
+
+    # Upload security reports as artifacts
+    - name: Upload security reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-scan-reports
+        path: |
+          *-report.json
+          *.sarif
+          security-summary.md
+        retention-days: 30
+
+    # Post security summary as comment on PR
+    - name: Comment on PR with security summary
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          if (fs.existsSync('security-summary.md')) {
+            const summary = fs.readFileSync('security-summary.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## 🔒 Security Scan Results\n\n' + summary
+            });
+          }
