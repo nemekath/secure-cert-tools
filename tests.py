@@ -1,6 +1,7 @@
 import pytest
 import OpenSSL.crypto
 import re
+import json
 from csr import CsrGenerator
 from app import app
 
@@ -271,8 +272,30 @@ class TestFlaskApp:
     @pytest.fixture
     def client(self):
         app.config['TESTING'] = True
+        app.config['WTF_CSRF_ENABLED'] = True
+        app.config['WTF_CSRF_TIME_LIMIT'] = None  # Disable time limit for testing
         with app.test_client() as client:
             yield client
+    
+    @pytest.fixture
+    def csrf_token(self, client):
+        """Get a valid CSRF token from the index page"""
+        response = client.get('/')
+        assert response.status_code == 200
+        
+        html_content = response.data.decode('utf-8')
+        
+        # Extract CSRF token from meta tag
+        meta_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', html_content)
+        if meta_match:
+            return meta_match.group(1)
+        
+        # Fallback: try to find any csrf_token in the HTML
+        token_match = re.search(r'csrf[_-]token["\']?\s*[:=]\s*["\']([^"\']+)["\']', html_content)
+        if token_match:
+            return token_match.group(1)
+        
+        pytest.fail("Could not extract CSRF token from index page")
     
     def test_index_page(self, client):
         """Test that index page loads"""
@@ -285,7 +308,7 @@ class TestFlaskApp:
         response = client.get('/security')
         assert response.status_code == 404
     
-    def test_generate_csr_post(self, client):
+    def test_generate_csr_post(self, client, csrf_token):
         """Test CSR generation via POST request"""
         form_data = {
             'C': 'US',
@@ -294,7 +317,8 @@ class TestFlaskApp:
             'O': 'Test Company',
             'OU': 'IT',
             'CN': 'test.example.com',
-            'keySize': '2048'
+            'keySize': '2048',
+            'csrf_token': csrf_token
         }
         
         response = client.post('/generate', data=form_data)
@@ -325,7 +349,7 @@ class TestFlaskApp:
         # Should return error status
         assert response.status_code in [400, 500]
     
-    def test_verify_csr_private_key_match(self, client):
+    def test_verify_csr_private_key_match(self, client, csrf_token):
         """Test verification of CSR and private key match"""
         # First, generate CSR and private key
         form_data = {
@@ -336,7 +360,8 @@ class TestFlaskApp:
             'OU': 'IT',
             'CN': 'test.example.com',
             'keyType': 'RSA',
-            'keySize': '2048'
+            'keySize': '2048',
+            'csrf_token': csrf_token
         }
         response = client.post('/generate', data=form_data)
         assert response.status_code == 200
@@ -349,7 +374,8 @@ class TestFlaskApp:
         # Verify the CSR and private key match
         verify_form_data = {
             'csr': generated_csr,
-            'privateKey': generated_key
+            'privateKey': generated_key,
+            'csrf_token': csrf_token
         }
         verify_response = client.post('/verify', data=verify_form_data)
         assert verify_response.status_code == 200
@@ -358,13 +384,14 @@ class TestFlaskApp:
         assert json_data['match'] is True
         assert 'match successfully' in json_data['message']
 
-    def test_verify_csr_private_key_mismatch(self, client):
+    def test_verify_csr_private_key_mismatch(self, client, csrf_token):
         """Test verification with mismatched CSR and private key"""
         # Generate CSR with one key
         form_data = {
             'CN': 'test.example.com',
             'keyType': 'RSA',
-            'keySize': '2048'
+            'keySize': '2048',
+            'csrf_token': csrf_token
         }
         response = client.post('/generate', data=form_data)
         assert response.status_code == 200
@@ -380,7 +407,8 @@ class TestFlaskApp:
         # Verify mismatch
         verify_data = {
             'csr': generated_csr_1,
-            'privateKey': generated_key_2
+            'privateKey': generated_key_2,
+            'csrf_token': csrf_token
         }
         verify_response = client.post('/verify', data=verify_data)
         assert verify_response.status_code == 400
@@ -407,7 +435,7 @@ class TestFlaskApp:
         assert response.is_json
         assert 'error' in response.get_json()
     
-    def test_generate_ecdsa_csr(self, client):
+    def test_generate_ecdsa_csr(self, client, csrf_token):
         """Test ECDSA CSR generation via POST request"""
         form_data = {
             'C': 'US',
@@ -417,7 +445,8 @@ class TestFlaskApp:
             'OU': 'IT',
             'CN': 'test.example.com',
             'keyType': 'ECDSA',
-            'curve': 'P-256'
+            'curve': 'P-256',
+            'csrf_token': csrf_token
         }
         
         response = client.post('/generate', data=form_data)
@@ -432,7 +461,7 @@ class TestFlaskApp:
         assert '-----END CERTIFICATE REQUEST-----' in json_data['csr']
         assert 'PRIVATE KEY' in json_data['private_key']
     
-    def test_generate_ecdsa_invalid_curve(self, client):
+    def test_generate_ecdsa_invalid_curve(self, client, csrf_token):
         """Test ECDSA CSR generation with invalid curve"""
         form_data = {
             'C': 'US',
@@ -442,7 +471,8 @@ class TestFlaskApp:
             'OU': 'IT',
             'CN': 'test.example.com',
             'keyType': 'ECDSA',
-            'curve': 'P-192'  # Invalid curve
+            'curve': 'P-192',  # Invalid curve
+            'csrf_token': csrf_token
         }
         
         response = client.post('/generate', data=form_data)
@@ -1029,16 +1059,39 @@ class TestCertificateVerification:
     @pytest.fixture
     def client(self):
         app.config['TESTING'] = True
+        app.config['WTF_CSRF_ENABLED'] = True
+        app.config['WTF_CSRF_TIME_LIMIT'] = None  # Disable time limit for testing
         with app.test_client() as client:
             yield client
     
-    def test_verify_certificate_private_key_match(self, client):
+    @pytest.fixture
+    def csrf_token(self, client):
+        """Get a valid CSRF token from the index page"""
+        response = client.get('/')
+        assert response.status_code == 200
+        
+        html_content = response.data.decode('utf-8')
+        
+        # Extract CSRF token from meta tag
+        meta_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', html_content)
+        if meta_match:
+            return meta_match.group(1)
+        
+        # Fallback: try to find any csrf_token in the HTML
+        token_match = re.search(r'csrf[_-]token["\']?\s*[:=]\s*["\']([^"\']+)["\']', html_content)
+        if token_match:
+            return token_match.group(1)
+        
+        pytest.fail("Could not extract CSRF token from index page")
+    
+    def test_verify_certificate_private_key_match(self, client, csrf_token):
         """Test verification of certificate and private key match"""
         # First, generate CSR and private key
         form_data = {
             'CN': 'test.example.com',
             'C': 'US',
-            'keySize': '2048'
+            'keySize': '2048',
+            'csrf_token': csrf_token
         }
         response = client.post('/generate', data=form_data)
         assert response.status_code == 200
@@ -1067,7 +1120,8 @@ KoZIhvcNAQELBQADggEBABL5v8VHN8Zp1JL8L9J+7N2P3x9V5K8L7J+N2Z3P8V1x
         # But it tests the endpoint functionality
         verify_data = {
             'certificate': mock_cert,
-            'privateKey': generated_key
+            'privateKey': generated_key,
+            'csrf_token': csrf_token
         }
         verify_response = client.post('/verify-certificate', data=verify_data)
         
@@ -1078,30 +1132,31 @@ KoZIhvcNAQELBQADggEBABL5v8VHN8Zp1JL8L9J+7N2P3x9V5K8L7J+N2Z3P8V1x
         assert 'match' in json_data
         assert 'message' in json_data
     
-    def test_verify_certificate_missing_inputs(self, client):
+    def test_verify_certificate_missing_inputs(self, client, csrf_token):
         """Test certificate verification with missing inputs"""
         # Missing certificate
-        response = client.post('/verify-certificate', data={'privateKey': 'test-key'})
+        response = client.post('/verify-certificate', data={'privateKey': 'test-key', 'csrf_token': csrf_token})
         assert response.status_code == 400
         json_data = response.get_json()
         assert json_data['match'] is False
         assert 'required' in json_data['message']
         
         # Missing private key
-        response = client.post('/verify-certificate', data={'certificate': 'test-cert'})
+        response = client.post('/verify-certificate', data={'certificate': 'test-cert', 'csrf_token': csrf_token})
         assert response.status_code == 400
         json_data = response.get_json()
         assert json_data['match'] is False
         assert 'required' in json_data['message']
     
-    def test_verify_certificate_invalid_format(self, client):
+    def test_verify_certificate_invalid_format(self, client, csrf_token):
         """Test certificate verification with invalid formats"""
         invalid_cert = "Invalid certificate content"
         invalid_key = "Invalid private key content"
         
         verify_data = {
             'certificate': invalid_cert,
-            'privateKey': invalid_key
+            'privateKey': invalid_key,
+            'csrf_token': csrf_token
         }
         
         response = client.post('/verify-certificate', data=verify_data)
@@ -1116,10 +1171,32 @@ class TestFlaskCSRAnalysis:
     @pytest.fixture
     def client(self):
         app.config['TESTING'] = True
+        app.config['WTF_CSRF_ENABLED'] = True
+        app.config['WTF_CSRF_TIME_LIMIT'] = None  # Disable time limit for testing
         with app.test_client() as client:
             yield client
     
-    def test_analyze_endpoint_valid_csr(self, client):
+    @pytest.fixture
+    def csrf_token(self, client):
+        """Get a valid CSRF token from the index page"""
+        response = client.get('/')
+        assert response.status_code == 200
+        
+        html_content = response.data.decode('utf-8')
+        
+        # Extract CSRF token from meta tag
+        meta_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', html_content)
+        if meta_match:
+            return meta_match.group(1)
+        
+        # Fallback: try to find any csrf_token in the HTML
+        token_match = re.search(r'csrf[_-]token["\']?\s*[:=]\s*["\']([^"\']+)["\']', html_content)
+        if token_match:
+            return token_match.group(1)
+        
+        pytest.fail("Could not extract CSRF token from index page")
+    
+    def test_analyze_endpoint_valid_csr(self, client, csrf_token):
         """Test /analyze endpoint with valid CSR"""
         # Generate a valid CSR
         form_data = {'CN': 'example.com', 'keySize': 2048}
@@ -1127,7 +1204,7 @@ class TestFlaskCSRAnalysis:
         csr_pem = generator.csr.decode('utf-8')
         
         # Test the endpoint
-        response = client.post('/analyze', data={'csr': csr_pem})
+        response = client.post('/analyze', data={'csr': csr_pem, 'csrf_token': csrf_token})
         
         assert response.status_code == 200
         data = response.get_json()
@@ -1135,20 +1212,20 @@ class TestFlaskCSRAnalysis:
         assert 'subject' in data
         assert 'public_key' in data
     
-    def test_analyze_endpoint_missing_csr(self, client):
+    def test_analyze_endpoint_missing_csr(self, client, csrf_token):
         """Test /analyze endpoint with missing CSR"""
-        response = client.post('/analyze', data={})
+        response = client.post('/analyze', data={'csrf_token': csrf_token})
         
         assert response.status_code == 400
         data = response.get_json()
         assert data['valid'] is False
         assert 'error' in data
     
-    def test_analyze_endpoint_invalid_csr(self, client):
+    def test_analyze_endpoint_invalid_csr(self, client, csrf_token):
         """Test /analyze endpoint with invalid CSR"""
         invalid_csr = "This is not a valid CSR"
         
-        response = client.post('/analyze', data={'csr': invalid_csr})
+        response = client.post('/analyze', data={'csr': invalid_csr, 'csrf_token': csrf_token})
         
         assert response.status_code == 200  # Analysis returns 200 even for invalid CSRs
         data = response.get_json()
@@ -1453,33 +1530,55 @@ class TestErrorHandling:
     @pytest.fixture
     def client(self):
         app.config['TESTING'] = True
+        app.config['WTF_CSRF_ENABLED'] = True
+        app.config['WTF_CSRF_TIME_LIMIT'] = None  # Disable time limit for testing
         with app.test_client() as client:
             yield client
     
-    def test_generate_endpoint_error_responses(self, client):
+    @pytest.fixture
+    def csrf_token(self, client):
+        """Get a valid CSRF token from the index page"""
+        response = client.get('/')
+        assert response.status_code == 200
+        
+        html_content = response.data.decode('utf-8')
+        
+        # Extract CSRF token from meta tag
+        meta_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', html_content)
+        if meta_match:
+            return meta_match.group(1)
+        
+        # Fallback: try to find any csrf_token in the HTML
+        token_match = re.search(r'csrf[_-]token["\']?\s*[:=]\s*["\']([^"\']+)["\']', html_content)
+        if token_match:
+            return token_match.group(1)
+        
+        pytest.fail("Could not extract CSRF token from index page")
+    
+    def test_generate_endpoint_error_responses(self, client, csrf_token):
         """Test that generate endpoint returns proper error responses"""
         # Test missing CN
-        response = client.post('/generate', data={'C': 'US'})
+        response = client.post('/generate', data={'C': 'US', 'csrf_token': csrf_token})
         assert response.status_code == 400
         assert response.is_json
         data = response.get_json()
         assert 'error' in data
         assert 'Common Name (CN) is required' in data['error']
     
-    def test_verify_endpoint_error_responses(self, client):
+    def test_verify_endpoint_error_responses(self, client, csrf_token):
         """Test that verify endpoint returns proper error responses"""
         # Test missing inputs
-        response = client.post('/verify', data={'csr': 'test'})
+        response = client.post('/verify', data={'csr': 'test', 'csrf_token': csrf_token})
         assert response.status_code == 400
         assert response.is_json
         data = response.get_json()
         assert data['match'] is False
         assert 'required' in data['message']
     
-    def test_analyze_endpoint_error_responses(self, client):
+    def test_analyze_endpoint_error_responses(self, client, csrf_token):
         """Test that analyze endpoint returns proper error responses"""
         # Test missing CSR
-        response = client.post('/analyze', data={})
+        response = client.post('/analyze', data={'csrf_token': csrf_token})
         assert response.status_code == 400
         assert response.is_json
         data = response.get_json()
@@ -2028,30 +2127,53 @@ class TestEndpointErrorHandling:
     @pytest.fixture
     def client(self):
         app.config['TESTING'] = True
+        app.config['WTF_CSRF_ENABLED'] = True
+        app.config['WTF_CSRF_TIME_LIMIT'] = None  # Disable time limit for testing
         with app.test_client() as client:
             yield client
     
-    def test_verify_certificate_endpoint_error_handling(self, client):
+    @pytest.fixture
+    def csrf_token(self, client):
+        """Get a valid CSRF token from the index page"""
+        response = client.get('/')
+        assert response.status_code == 200
+        
+        html_content = response.data.decode('utf-8')
+        
+        # Extract CSRF token from meta tag
+        meta_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', html_content)
+        if meta_match:
+            return meta_match.group(1)
+        
+        # Fallback: try to find any csrf_token in the HTML
+        token_match = re.search(r'csrf[_-]token["\']?\s*[:=]\s*["\']([^"\']+)["\']', html_content)
+        if token_match:
+            return token_match.group(1)
+        
+        pytest.fail("Could not extract CSRF token from index page")
+    
+    def test_verify_certificate_endpoint_error_handling(self, client, csrf_token):
         """Test error handling in certificate verification endpoint"""
         # Test with missing certificate
-        response = client.post('/verify-certificate', data={'privateKey': 'test'})
+        response = client.post('/verify-certificate', data={'privateKey': 'test', 'csrf_token': csrf_token})
         assert response.status_code == 400
         
         # Test with missing private key
-        response = client.post('/verify-certificate', data={'certificate': 'test'})
+        response = client.post('/verify-certificate', data={'certificate': 'test', 'csrf_token': csrf_token})
         assert response.status_code == 400
         
         # Test with invalid certificate format
         response = client.post('/verify-certificate', data={
             'certificate': 'invalid cert',
-            'privateKey': 'invalid key'
+            'privateKey': 'invalid key',
+            'csrf_token': csrf_token
         })
         assert response.status_code == 400
     
-    def test_analyze_endpoint_exception_handling(self, client):
+    def test_analyze_endpoint_exception_handling(self, client, csrf_token):
         """Test exception handling in analyze endpoint"""
         # Test with completely invalid input
-        response = client.post('/analyze', data={'csr': 'completely invalid input'})
+        response = client.post('/analyze', data={'csr': 'completely invalid input', 'csrf_token': csrf_token})
         assert response.status_code == 200  # Updated per current behavior
         assert response.is_json
         
@@ -2059,12 +2181,13 @@ class TestEndpointErrorHandling:
         assert data['valid'] is False
         assert 'error' in data
     
-    def test_verify_endpoint_exception_handling(self, client):
+    def test_verify_endpoint_exception_handling(self, client, csrf_token):
         """Test exception handling in verify endpoint"""
         # Test with invalid CSR and private key formats
         response = client.post('/verify', data={
             'csr': 'invalid csr format',
-            'privateKey': 'invalid key format'
+            'privateKey': 'invalid key format',
+            'csrf_token': csrf_token
         })
         assert response.status_code == 400
         assert response.is_json

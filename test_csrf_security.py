@@ -60,8 +60,14 @@ class TestCSRFProtection:
         assert 'name="csrf-token"' in html_content
         assert 'content=' in html_content
         
-        # Should have CSRF token function call in forms (modern template uses {{ csrf_token() }})
-        assert 'csrf_token()' in html_content or 'csrf_token' in html_content
+        # The CSRF token is present in the meta tag (which is the modern approach)
+        assert 'csrf-token' in html_content
+        
+        # Extract the actual token to verify it's not empty
+        import re
+        token_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', html_content)
+        assert token_match is not None
+        assert len(token_match.group(1)) > 10  # Token should be substantial
 
     def test_generate_endpoint_requires_csrf(self, client):
         """Test that /generate endpoint requires CSRF token"""
@@ -116,19 +122,25 @@ class TestCSRFProtection:
 
     def test_verify_endpoint_with_valid_csrf(self, client, csrf_token):
         """Test that /verify endpoint accepts valid CSRF token"""
+        # Generate a real CSR and private key for testing
+        from csr import CsrGenerator
+        
+        csr_info = {'CN': 'test.example.com', 'keySize': '2048'}
+        generator = CsrGenerator(csr_info)
+        
         form_data = {
-            'csr': '-----BEGIN CERTIFICATE REQUEST-----\ntest\n-----END CERTIFICATE REQUEST-----',
-            'privateKey': '-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----',
+            'csr': generator.csr.decode('utf-8'),
+            'privateKey': generator.private_key.decode('utf-8'),
             'csrf_token': csrf_token
         }
         
         response = client.post('/verify', data=form_data)
-        # Should succeed or have validation error, not CSRF error
-        assert response.status_code in [200, 500]
+        # Should succeed since we're using matching CSR and key
+        assert response.status_code == 200
         
-        if response.status_code == 500:
-            json_data = response.get_json()
-            assert json_data.get('error_type') != 'CSRFError'
+        json_data = response.get_json()
+        assert 'match' in json_data
+        assert json_data['match'] is True
 
     def test_analyze_endpoint_requires_csrf(self, client):
         """Test that /analyze endpoint requires CSRF token"""
@@ -176,19 +188,57 @@ class TestCSRFProtection:
 
     def test_verify_certificate_endpoint_with_valid_csrf(self, client, csrf_token):
         """Test that /verify-certificate endpoint accepts valid CSRF token"""
+        # Generate a real certificate and private key for testing
+        from csr import CsrGenerator
+        from cryptography import x509
+        from cryptography.x509.oid import NameOID
+        from cryptography.hazmat.primitives import hashes, serialization
+        from datetime import datetime, timedelta
+        
+        # Generate a private key
+        csr_info = {'CN': 'test.example.com', 'keySize': '2048'}
+        generator = CsrGenerator(csr_info)
+        
+        # Load the private key
+        private_key = serialization.load_pem_private_key(
+            generator.private_key, password=None
+        )
+        
+        # Create a self-signed certificate
+        subject = issuer = x509.Name([
+            x509.NameAttribute(NameOID.COMMON_NAME, "test.example.com"),
+        ])
+        
+        cert = x509.CertificateBuilder().subject_name(
+            subject
+        ).issuer_name(
+            issuer
+        ).public_key(
+            private_key.public_key()
+        ).serial_number(
+            x509.random_serial_number()
+        ).not_valid_before(
+            datetime.utcnow()
+        ).not_valid_after(
+            datetime.utcnow() + timedelta(days=30)
+        ).sign(private_key, hashes.SHA256())
+        
+        certificate_pem = cert.public_bytes(serialization.Encoding.PEM).decode('utf-8')
+        private_key_pem = generator.private_key.decode('utf-8')
+        
         form_data = {
-            'certificate': '-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----',
-            'privateKey': '-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----',
+            'certificate': certificate_pem,
+            'privateKey': private_key_pem,
             'csrf_token': csrf_token
         }
         
         response = client.post('/verify-certificate', data=form_data)
-        # Should succeed or have validation error, not CSRF error
-        assert response.status_code in [200, 500]
+        # Should succeed since we're using matching certificate and key
+        assert response.status_code == 200
         
-        if response.status_code == 500:
-            json_data = response.get_json()
-            assert json_data.get('error_type') != 'CSRFError'
+        json_data = response.get_json()
+        assert 'match' in json_data
+        assert json_data['match'] is True
 
     def test_invalid_csrf_token_rejected(self, client):
         """Test that invalid CSRF tokens are rejected"""

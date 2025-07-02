@@ -9,6 +9,7 @@ injection attacks, and other security vulnerabilities.
 import pytest
 import json
 import base64
+import re
 from app import app
 from csr import CsrGenerator
 
@@ -19,10 +20,37 @@ class TestInputValidationSecurity:
     @pytest.fixture
     def client(self):
         app.config['TESTING'] = True
+        app.config['WTF_CSRF_ENABLED'] = True
+        app.config['WTF_CSRF_TIME_LIMIT'] = None  # Disable time limit for testing
+        # Temporarily disable rate limiting for security tests
+        from app import limiter
+        limiter.enabled = False
         with app.test_client() as client:
             yield client
+        # Re-enable rate limiting after tests
+        limiter.enabled = True
+    
+    @pytest.fixture
+    def csrf_token(self, client):
+        """Get a valid CSRF token from the index page"""
+        response = client.get('/')
+        assert response.status_code == 200
+        
+        html_content = response.data.decode('utf-8')
+        
+        # Extract CSRF token from meta tag
+        meta_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', html_content)
+        if meta_match:
+            return meta_match.group(1)
+        
+        # Fallback: try to find any csrf_token in the HTML
+        token_match = re.search(r'csrf[_-]token["\']?\s*[:=]\s*["\']([^"\']+)["\']', html_content)
+        if token_match:
+            return token_match.group(1)
+        
+        pytest.fail("Could not extract CSRF token from index page")
 
-    def test_xss_prevention_in_cn(self, client):
+    def test_xss_prevention_in_cn(self, client, csrf_token):
         """Test XSS prevention in Common Name field"""
         malicious_payloads = [
             '<script>alert("xss")</script>',
@@ -41,7 +69,8 @@ class TestInputValidationSecurity:
             form_data = {
                 'CN': payload,
                 'C': 'US',
-                'keySize': '2048'
+                'keySize': '2048',
+                'csrf_token': csrf_token
             }
             
             response = client.post('/generate', data=form_data)
@@ -51,7 +80,7 @@ class TestInputValidationSecurity:
                 data = response.get_json()
                 assert 'error' in data
 
-    def test_sql_injection_prevention(self, client):
+    def test_sql_injection_prevention(self, client, csrf_token):
         """Test SQL injection prevention (even though we don't use SQL)"""
         sql_payloads = [
             "'; DROP TABLE users; --",
@@ -67,14 +96,15 @@ class TestInputValidationSecurity:
                 'CN': f"test{payload}.example.com",
                 'O': payload,
                 'OU': payload,
-                'C': 'US'
+                'C': 'US',
+                'csrf_token': csrf_token
             }
             
             response = client.post('/generate', data=form_data)
             # Should reject malicious input
             assert response.status_code in [400, 500]
 
-    def test_command_injection_prevention(self, client):
+    def test_command_injection_prevention(self, client, csrf_token):
         """Test command injection prevention"""
         command_payloads = [
             "; cat /etc/passwd",
@@ -93,13 +123,14 @@ class TestInputValidationSecurity:
             form_data = {
                 'CN': f"test{payload}.com",
                 'O': f"Company{payload}",
-                'C': 'US'
+                'C': 'US',
+                'csrf_token': csrf_token
             }
             
             response = client.post('/generate', data=form_data)
             assert response.status_code in [400, 500]
 
-    def test_path_traversal_prevention(self, client):
+    def test_path_traversal_prevention(self, client, csrf_token):
         """Test path traversal prevention"""
         path_payloads = [
             "../../../etc/passwd",
@@ -115,13 +146,14 @@ class TestInputValidationSecurity:
             form_data = {
                 'CN': f"{payload}.com",
                 'O': payload,
-                'C': 'US'
+                'C': 'US',
+                'csrf_token': csrf_token
             }
             
             response = client.post('/generate', data=form_data)
             assert response.status_code in [400, 500]
 
-    def test_unicode_and_encoding_attacks(self, client):
+    def test_unicode_and_encoding_attacks(self, client, csrf_token):
         """Test Unicode and encoding attack prevention"""
         unicode_payloads = [
             '\u0000',  # NULL byte
@@ -140,21 +172,23 @@ class TestInputValidationSecurity:
             form_data = {
                 'CN': f"test{payload}.com",
                 'O': f"Company{payload}",
-                'C': 'US'
+                'C': 'US',
+                'csrf_token': csrf_token
             }
             
             response = client.post('/generate', data=form_data)
             # Should handle Unicode gracefully or reject dangerous characters
             assert response.status_code in [200, 400, 500]
 
-    def test_buffer_overflow_prevention(self, client):
+    def test_buffer_overflow_prevention(self, client, csrf_token):
         """Test buffer overflow prevention with extremely long inputs"""
         # Very long string (10MB)
         long_string = 'A' * (10 * 1024 * 1024)
         
         form_data = {
             'CN': long_string,
-            'C': 'US'
+            'C': 'US',
+            'csrf_token': csrf_token
         }
         
         response = client.post('/generate', data=form_data)
@@ -164,7 +198,7 @@ class TestInputValidationSecurity:
             data = response.get_json()
             assert 'error' in data
 
-    def test_json_injection_in_analyze_endpoint(self, client):
+    def test_json_injection_in_analyze_endpoint(self, client, csrf_token):
         """Test JSON injection prevention in analyze endpoint"""
         json_payloads = [
             '{"__proto__": {"admin": true}}',
@@ -179,12 +213,15 @@ class TestInputValidationSecurity:
         ]
         
         for payload in json_payloads:
-            form_data = {'csr': payload}
+            form_data = {
+                'csr': payload,
+                'csrf_token': csrf_token
+            }
             response = client.post('/analyze', data=form_data)
             # Should handle gracefully
             assert response.status_code in [200, 400]
 
-    def test_ldap_injection_prevention(self, client):
+    def test_ldap_injection_prevention(self, client, csrf_token):
         """Test LDAP injection prevention"""
         ldap_payloads = [
             "*)(&",
@@ -199,7 +236,8 @@ class TestInputValidationSecurity:
             form_data = {
                 'CN': f"test{payload}.com",
                 'O': payload,
-                'C': 'US'
+                'C': 'US',
+                'csrf_token': csrf_token
             }
             
             response = client.post('/generate', data=form_data)
@@ -212,10 +250,37 @@ class TestFileParsingSecurityHardening:
     @pytest.fixture
     def client(self):
         app.config['TESTING'] = True
+        app.config['WTF_CSRF_ENABLED'] = True
+        app.config['WTF_CSRF_TIME_LIMIT'] = None  # Disable time limit for testing
+        # Temporarily disable rate limiting for security tests
+        from app import limiter
+        limiter.enabled = False
         with app.test_client() as client:
             yield client
+        # Re-enable rate limiting after tests
+        limiter.enabled = True
+    
+    @pytest.fixture
+    def csrf_token(self, client):
+        """Get a valid CSRF token from the index page"""
+        response = client.get('/')
+        assert response.status_code == 200
+        
+        html_content = response.data.decode('utf-8')
+        
+        # Extract CSRF token from meta tag
+        meta_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', html_content)
+        if meta_match:
+            return meta_match.group(1)
+        
+        # Fallback: try to find any csrf_token in the HTML
+        token_match = re.search(r'csrf[_-]token["\']?\s*[:=]\s*["\']([^"\']+)["\']', html_content)
+        if token_match:
+            return token_match.group(1)
+        
+        pytest.fail("Could not extract CSRF token from index page")
 
-    def test_malformed_pem_handling(self, client):
+    def test_malformed_pem_handling(self, client, csrf_token):
         """Test handling of malformed PEM files"""
         malformed_pems = [
             "-----BEGIN CERTIFICATE REQUEST-----\nNOT_BASE64_DATA\n-----END CERTIFICATE REQUEST-----",
@@ -228,7 +293,10 @@ class TestFileParsingSecurityHardening:
         ]
         
         for malformed_pem in malformed_pems:
-            form_data = {'csr': malformed_pem}
+            form_data = {
+                'csr': malformed_pem,
+                'csrf_token': csrf_token
+            }
             response = client.post('/analyze', data=form_data)
             
             # Should handle gracefully without crashing
@@ -238,7 +306,7 @@ class TestFileParsingSecurityHardening:
                 assert 'valid' in data
                 assert data['valid'] is False
 
-    def test_binary_data_injection(self, client):
+    def test_binary_data_injection(self, client, csrf_token):
         """Test handling of binary data injection"""
         binary_payloads = [
             b'\x00\x01\x02\x03\x04\x05',  # Raw binary
@@ -256,13 +324,16 @@ class TestFileParsingSecurityHardening:
             except:
                 payload_str = base64.b64encode(binary_payload).decode('ascii')
             
-            form_data = {'csr': payload_str}
+            form_data = {
+                'csr': payload_str,
+                'csrf_token': csrf_token
+            }
             response = client.post('/analyze', data=form_data)
             
             # Should handle gracefully
             assert response.status_code in [200, 400]
 
-    def test_compressed_data_handling(self, client):
+    def test_compressed_data_handling(self, client, csrf_token):
         """Test handling of compressed or encoded data"""
         import gzip
         import zlib
@@ -271,17 +342,23 @@ class TestFileParsingSecurityHardening:
         
         # Test gzip compressed data
         gzipped = gzip.compress(test_data)
-        form_data = {'csr': base64.b64encode(gzipped).decode('ascii')}
+        form_data = {
+            'csr': base64.b64encode(gzipped).decode('ascii'),
+            'csrf_token': csrf_token
+        }
         response = client.post('/analyze', data=form_data)
         assert response.status_code in [200, 400]
         
         # Test zlib compressed data
         compressed = zlib.compress(test_data)
-        form_data = {'csr': base64.b64encode(compressed).decode('ascii')}
+        form_data = {
+            'csr': base64.b64encode(compressed).decode('ascii'),
+            'csrf_token': csrf_token
+        }
         response = client.post('/analyze', data=form_data)
         assert response.status_code in [200, 400]
 
-    def test_asymmetric_key_parsing_security(self, client):
+    def test_asymmetric_key_parsing_security(self, client, csrf_token):
         """Test security of asymmetric key parsing"""
         malicious_keys = [
             # Malformed RSA key
@@ -303,7 +380,8 @@ MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDZfUHF
         for malicious_key in malicious_keys:
             form_data = {
                 'csr': '-----BEGIN CERTIFICATE REQUEST-----\ntest\n-----END CERTIFICATE REQUEST-----',
-                'privateKey': malicious_key
+                'privateKey': malicious_key,
+                'csrf_token': csrf_token
             }
             response = client.post('/verify', data=form_data)
             
@@ -314,7 +392,7 @@ MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDZfUHF
                 assert 'match' in data
                 assert data['match'] is False
 
-    def test_certificate_parsing_security(self, client):
+    def test_certificate_parsing_security(self, client, csrf_token):
         """Test security of certificate parsing"""
         malicious_certs = [
             # Malformed certificate
@@ -336,7 +414,8 @@ MIIDXTCCAkWgAwIBAgIJALQ8+dRY8K8lMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV\x00BAYTAkFVMRMw
         for malicious_cert in malicious_certs:
             form_data = {
                 'certificate': malicious_cert,
-                'privateKey': 'test-key'
+                'privateKey': 'test-key',
+                'csrf_token': csrf_token
             }
             response = client.post('/verify-certificate', data=form_data)
             
@@ -350,24 +429,52 @@ class TestMemoryExhaustionPrevention:
     @pytest.fixture
     def client(self):
         app.config['TESTING'] = True
+        app.config['WTF_CSRF_ENABLED'] = True
+        app.config['WTF_CSRF_TIME_LIMIT'] = None  # Disable time limit for testing
+        # Temporarily disable rate limiting for security tests
+        from app import limiter
+        limiter.enabled = False
         with app.test_client() as client:
             yield client
+        # Re-enable rate limiting after tests
+        limiter.enabled = True
+    
+    @pytest.fixture
+    def csrf_token(self, client):
+        """Get a valid CSRF token from the index page"""
+        response = client.get('/')
+        assert response.status_code == 200
+        
+        html_content = response.data.decode('utf-8')
+        
+        # Extract CSRF token from meta tag
+        meta_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', html_content)
+        if meta_match:
+            return meta_match.group(1)
+        
+        # Fallback: try to find any csrf_token in the HTML
+        token_match = re.search(r'csrf[_-]token["\']?\s*[:=]\s*["\']([^"\']+)["\']', html_content)
+        if token_match:
+            return token_match.group(1)
+        
+        pytest.fail("Could not extract CSRF token from index page")
 
-    def test_large_request_handling(self, client):
+    def test_large_request_handling(self, client, csrf_token):
         """Test handling of extremely large requests"""
         # Test large form data
         large_data = 'A' * (5 * 1024 * 1024)  # 5MB
         
         form_data = {
             'CN': large_data,
-            'C': 'US'
+            'C': 'US',
+            'csrf_token': csrf_token
         }
         
         response = client.post('/generate', data=form_data)
         # Should reject due to size limits
         assert response.status_code in [400, 413, 500]
 
-    def test_repeated_field_submission(self, client):
+    def test_repeated_field_submission(self, client, csrf_token):
         """Test handling of repeated field submissions"""
         # Create form data with many repeated fields
         form_data = {}
@@ -376,12 +483,13 @@ class TestMemoryExhaustionPrevention:
         
         form_data['CN'] = 'example.com'
         form_data['C'] = 'US'
+        form_data['csrf_token'] = csrf_token
         
         response = client.post('/generate', data=form_data)
         # Should handle gracefully (extra fields should be ignored)
         assert response.status_code in [200, 400]
 
-    def test_deeply_nested_subject_alt_names(self, client):
+    def test_deeply_nested_subject_alt_names(self, client, csrf_token):
         """Test handling of complex Subject Alternative Names"""
         # Create extremely long SAN list
         domains = [f"subdomain{i}.example.com" for i in range(1000)]
@@ -390,7 +498,8 @@ class TestMemoryExhaustionPrevention:
         form_data = {
             'CN': 'example.com',
             'subjectAltNames': san_string,
-            'C': 'US'
+            'C': 'US',
+            'csrf_token': csrf_token
         }
         
         response = client.post('/generate', data=form_data)
@@ -404,18 +513,54 @@ class TestTimingAttackPrevention:
     @pytest.fixture
     def client(self):
         app.config['TESTING'] = True
+        app.config['WTF_CSRF_ENABLED'] = True
+        app.config['WTF_CSRF_TIME_LIMIT'] = None  # Disable time limit for testing
+        # Temporarily disable rate limiting for security tests
+        from app import limiter
+        limiter.enabled = False
         with app.test_client() as client:
             yield client
+        # Re-enable rate limiting after tests
+        limiter.enabled = True
+    
+    @pytest.fixture
+    def csrf_token(self, client):
+        """Get a valid CSRF token from the index page"""
+        response = client.get('/')
+        assert response.status_code == 200
+        
+        html_content = response.data.decode('utf-8')
+        
+        # Extract CSRF token from meta tag
+        meta_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', html_content)
+        if meta_match:
+            return meta_match.group(1)
+        
+        # Fallback: try to find any csrf_token in the HTML
+        token_match = re.search(r'csrf[_-]token["\']?\s*[:=]\s*["\']([^"\']+)["\']', html_content)
+        if token_match:
+            return token_match.group(1)
+        
+        pytest.fail("Could not extract CSRF token from index page")
 
-    def test_consistent_error_response_timing(self, client):
+    def test_consistent_error_response_timing(self, client, csrf_token):
         """Test that error responses have consistent timing"""
         import time
         
         # Test with valid but incorrect data
-        valid_form = {'CN': 'example.com', 'C': 'US', 'keySize': '1024'}  # Invalid key size
+        valid_form = {
+            'CN': 'example.com',
+            'C': 'US',
+            'keySize': '1024',  # Invalid key size
+            'csrf_token': csrf_token
+        }
         
         # Test with completely invalid data
-        invalid_form = {'CN': '<script>alert(1)</script>', 'C': 'INVALID'}
+        invalid_form = {
+            'CN': '<script>alert(1)</script>',
+            'C': 'INVALID',
+            'csrf_token': csrf_token
+        }
         
         # Measure timing for multiple requests
         times_valid = []
@@ -493,10 +638,37 @@ class TestLoggingSecurityHardening:
     @pytest.fixture
     def client(self):
         app.config['TESTING'] = True
+        app.config['WTF_CSRF_ENABLED'] = True
+        app.config['WTF_CSRF_TIME_LIMIT'] = None  # Disable time limit for testing
+        # Temporarily disable rate limiting for security tests
+        from app import limiter
+        limiter.enabled = False
         with app.test_client() as client:
             yield client
+        # Re-enable rate limiting after tests
+        limiter.enabled = True
+    
+    @pytest.fixture
+    def csrf_token(self, client):
+        """Get a valid CSRF token from the index page"""
+        response = client.get('/')
+        assert response.status_code == 200
+        
+        html_content = response.data.decode('utf-8')
+        
+        # Extract CSRF token from meta tag
+        meta_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', html_content)
+        if meta_match:
+            return meta_match.group(1)
+        
+        # Fallback: try to find any csrf_token in the HTML
+        token_match = re.search(r'csrf[_-]token["\']?\s*[:=]\s*["\']([^"\']+)["\']', html_content)
+        if token_match:
+            return token_match.group(1)
+        
+        pytest.fail("Could not extract CSRF token from index page")
 
-    def test_no_sensitive_data_in_logs(self, client):
+    def test_no_sensitive_data_in_logs(self, client, csrf_token):
         """Test that sensitive data is not logged"""
         import logging
         from io import StringIO
@@ -513,7 +685,8 @@ class TestLoggingSecurityHardening:
             'CN': 'secret.example.com',
             'O': 'Secret Organization',
             'OU': 'Top Secret Unit',
-            'C': 'US'
+            'C': 'US',
+            'csrf_token': csrf_token
         }
         
         response = client.post('/generate', data=form_data)
@@ -529,7 +702,7 @@ class TestLoggingSecurityHardening:
         
         logger.removeHandler(handler)
 
-    def test_request_sanitization_in_logs(self, client):
+    def test_request_sanitization_in_logs(self, client, csrf_token):
         """Test that malicious requests are sanitized in logs"""
         import logging
         from io import StringIO
@@ -543,7 +716,8 @@ class TestLoggingSecurityHardening:
         # Submit malicious request
         form_data = {
             'CN': '<script>alert(1)</script>.com',
-            'C': 'US'
+            'C': 'US',
+            'csrf_token': csrf_token
         }
         
         response = client.post('/generate', data=form_data)

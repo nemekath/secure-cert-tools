@@ -66,8 +66,8 @@ jobs:
     
     - name: Test with pytest - Full Test Suite
       run: |
-        echo "Running comprehensive test suite (125 tests)..."
-        pytest tests.py test_security_hardening.py -v --tb=short
+        echo "Running comprehensive test suite..."
+        python run_comprehensive_tests.py
         echo "✅ All tests completed"
     
     - name: Validate Test Coverage and Count

@@ -1,0 +1,90 @@
+name: 🔒 Security Vulnerability Report
+description: Report a security vulnerability (use for non-public security issues)
+title: "[SECURITY] "
+labels: ["security", "triage-needed"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ **IMPORTANT**: If this is a serious security vulnerability, please report it privately by:
+        1. Emailing the maintainers directly
+        2. Using GitHub's private vulnerability reporting feature
+        3. Following our security policy in SECURITY.md
+        
+        Only use this public issue template for minor security concerns or security enhancement suggestions.
+
+  - type: input
+    id: vulnerability-type
+    attributes:
+      label: Vulnerability Type
+      description: What type of security issue is this?
+      placeholder: e.g., XSS, SQL injection, authentication bypass, etc.
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Security Issue Description
+      description: Describe the security concern in detail
+      placeholder: |
+        - What component is affected?
+        - What is the potential impact?
+        - How can this be exploited?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can this security issue be reproduced?
+      placeholder: |
+        1. Go to...
+        2. Enter...
+        3. See vulnerability...
+    validations:
+      required: false
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Security Impact
+      description: What is the potential security impact?
+      placeholder: |
+        - Data exposure risk
+        - System compromise potential
+        - Attack vector details
+    validations:
+      required: true
+
+  - type: input
+    id: severity
+    attributes:
+      label: Estimated Severity
+      description: Your assessment of severity (Low/Medium/High/Critical)
+      placeholder: e.g., Medium
+    validations:
+      required: true
+
+  - type: textarea
+    id: mitigation
+    attributes:
+      label: Suggested Mitigation
+      description: Any suggestions for fixing this security issue?
+      placeholder: Describe potential solutions or workarounds
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Security Checklist
+      description: Please confirm the following
+      options:
+        - label: I have reviewed the existing security documentation
+          required: true
+        - label: I have verified this is not a duplicate of an existing issue
+          required: true
+        - label: I understand this issue will be publicly visible
+          required: true

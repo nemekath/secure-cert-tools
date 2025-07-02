@@ -22,7 +22,13 @@ def run_command(cmd, description):
 
 def validate_test_files():
     """Validate that all test files exist and are executable"""
-    test_files = ["tests.py", "test_security_hardening.py"]
+    test_files = [
+        "test_comprehensive.py", 
+        "test_csrf_security.py", 
+        "test_enhanced_security.py", 
+        "test_security_hardening.py",
+        "run_comprehensive_tests.py"
+    ]
     missing_files = []
     
     for test_file in test_files:
@@ -37,35 +43,40 @@ def validate_test_files():
     return True
 
 def run_test_suite():
-    """Run the complete test suite and validate results"""
-    cmd = "python -m pytest tests.py test_security_hardening.py -v --tb=short"
-    result = run_command(cmd, "Running complete test suite")
+    """Run the comprehensive test suite and validate results"""
+    cmd = "python run_comprehensive_tests.py"
+    result = run_command(cmd, "Running comprehensive test suite")
     
     if not result:
         return False, 0, 0
     
     if result.returncode != 0:
-        print(f"❌ Test suite failed with return code {result.returncode}")
+        print(f"❌ Comprehensive test suite failed with return code {result.returncode}")
         print("STDOUT:", result.stdout)
         print("STDERR:", result.stderr)
         return False, 0, 0
     
-    # Count tests
+    # Parse the comprehensive test output for totals
     output_lines = result.stdout.split('\n')
-    passed_count = sum(1 for line in output_lines if ' PASSED' in line)
-    failed_count = sum(1 for line in output_lines if ' FAILED' in line)
     
-    # Look for test summary line
-    summary_lines = [line for line in output_lines if 'passed' in line and ('warning' in line or 'error' in line or 'failed' in line)]
+    # Look for the final summary line
+    passed_suites = 0
+    total_suites = 0
+    for line in output_lines:
+        if "test suites passed" in line:
+            # Extract numbers from "📈 Overall Results: 14/14 test suites passed"
+            if "/" in line:
+                parts = line.split()
+                for part in parts:
+                    if "/" in part:
+                        passed_suites, total_suites = map(int, part.split("/"))
+                        break
     
-    print(f"✅ Test execution completed")
-    print(f"📊 Tests passed: {passed_count}")
-    print(f"📊 Tests failed: {failed_count}")
+    print(f"✅ Comprehensive test suite completed")
+    print(f"📊 Test suites passed: {passed_suites}/{total_suites}")
     
-    if summary_lines:
-        print(f"📋 Summary: {summary_lines[-1]}")
-    
-    return True, passed_count, failed_count
+    failed_suites = total_suites - passed_suites
+    return True, passed_suites, failed_suites
 
 def validate_security_tests():
     """Specifically validate security hardening tests"""
@@ -87,52 +98,53 @@ def validate_security_tests():
     return True, security_passed
 
 def validate_expected_test_count():
-    """Validate that we have the expected number of tests"""
-    expected_total = 158
-    expected_security = 22
-    expected_functional = 136
+    """Validate that we have the expected number of test suites"""
+    # We now use comprehensive test suites instead of individual test counts
+    expected_test_suites = 14
+    expected_core_suites = 10
+    expected_security_suites = 3  # CSRF, Enhanced, Hardening
+    expected_rate_limiting_suites = 1
     
-    # Run functional tests
-    cmd_functional = "python -m pytest tests.py -v --tb=short"
-    result_functional = run_command(cmd_functional, "Counting functional tests")
+    print(f"📊 Test suite validation:")
+    print(f"   Expected test suites: {expected_test_suites}")
+    print(f"   - Core functionality suites: {expected_core_suites}")
+    print(f"   - Security test suites: {expected_security_suites}")
+    print(f"   - Rate limiting suites: {expected_rate_limiting_suites}")
     
-    if not result_functional or result_functional.returncode != 0:
-        print("❌ Could not count functional tests")
+    # Run comprehensive test suite to validate structure
+    cmd = "python run_comprehensive_tests.py"
+    result = run_command(cmd, "Validating comprehensive test suite structure")
+    
+    if not result or result.returncode != 0:
+        print("❌ Could not validate comprehensive test suite")
         return False
     
-    functional_count = sum(1 for line in result_functional.stdout.split('\n') if ' PASSED' in line)
+    # Parse the output to count passed suites
+    output_lines = result.stdout.split('\n')
+    passed_suites = 0
+    total_suites = 0
     
-    # Run security tests  
-    cmd_security = "python -m pytest test_security_hardening.py -v --tb=short"
-    result_security = run_command(cmd_security, "Counting security tests")
+    for line in output_lines:
+        if "test suites passed" in line and "/" in line:
+            # Extract from "📈 Overall Results: 14/14 test suites passed"
+            parts = line.split()
+            for part in parts:
+                if "/" in part:
+                    passed_suites, total_suites = map(int, part.split("/"))
+                    break
     
-    if not result_security or result_security.returncode != 0:
-        print("❌ Could not count security tests")
+    print(f"   Actual test suites: {passed_suites}/{total_suites}")
+    
+    if total_suites != expected_test_suites:
+        print(f"⚠️  Test suite count mismatch! Expected {expected_test_suites}, got {total_suites}")
+        print("   This might indicate changes in test structure")
         return False
     
-    security_count = sum(1 for line in result_security.stdout.split('\n') if ' PASSED' in line)
-    
-    total_count = functional_count + security_count
-    
-    print(f"📊 Test count validation:")
-    print(f"   Functional tests: {functional_count} (expected: {expected_functional})")
-    print(f"   Security tests: {security_count} (expected: {expected_security})")
-    print(f"   Total tests: {total_count} (expected: {expected_total})")
-    
-    if total_count != expected_total:
-        print(f"⚠️  Test count mismatch! Expected {expected_total}, got {total_count}")
-        print("   This might indicate missing tests or changes in test structure")
+    if passed_suites != total_suites:
+        print(f"❌ Not all test suites passed! {passed_suites}/{total_suites}")
         return False
     
-    if security_count != expected_security:
-        print(f"⚠️  Security test count mismatch! Expected {expected_security}, got {security_count}")
-        return False
-    
-    if functional_count != expected_functional:
-        print(f"⚠️  Functional test count mismatch! Expected {expected_functional}, got {functional_count}")
-        return False
-    
-    print("✅ Test count validation passed")
+    print("✅ Test suite validation passed")
     return True
 
 def main():
