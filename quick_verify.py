@@ -12,14 +12,23 @@ import os
 
 def print_status(message, status):
     """Print a status message with colored output"""
-    if status:
-        print(f"✅ {message}")
-    else:
-        print(f"❌ {message}")
+    try:
+        if status:
+            print(f"✅ {message}")
+        else:
+            print(f"❌ {message}")
+    except UnicodeEncodeError:
+        if status:
+            print(f"[PASS] {message}")
+        else:
+            print(f"[FAIL] {message}")
 
 def check_dependencies():
     """Check if all required dependencies are installed"""
-    print("🔍 Checking dependencies...")
+    try:
+        print("🔍 Checking dependencies...")
+    except UnicodeEncodeError:
+        print("Checking dependencies...")
     
     required_modules = [
         'flask', 'flask_wtf', 'flask_limiter', 'cryptography', 
@@ -39,7 +48,10 @@ def check_dependencies():
 
 def test_csr_generation():
     """Test basic CSR generation functionality"""
-    print("\n🔧 Testing CSR generation...")
+    try:
+        print("\n🔧 Testing CSR generation...")
+    except UnicodeEncodeError:
+        print("\nTesting CSR generation...")
     
     try:
         from csr import CsrGenerator
@@ -84,7 +96,10 @@ def test_csr_generation():
 
 def test_domain_validation():
     """Test domain validation functionality"""
-    print("\n🌐 Testing domain validation...")
+    try:
+        print("\n🌐 Testing domain validation...")
+    except UnicodeEncodeError:
+        print("\nTesting domain validation...")
     
     try:
         from csr import CsrGenerator
@@ -124,7 +139,10 @@ def test_domain_validation():
 
 def test_input_validation():
     """Test input validation functionality"""
-    print("\n🛡️ Testing input validation...")
+    try:
+        print("\n🛡️ Testing input validation...")
+    except UnicodeEncodeError:
+        print("\nTesting input validation...")
     
     try:
         from csr import CsrGenerator
@@ -164,7 +182,10 @@ def test_input_validation():
 
 def test_security_features():
     """Test key security features"""
-    print("\n🔒 Testing security features...")
+    try:
+        print("\n🔒 Testing security features...")
+    except UnicodeEncodeError:
+        print("\nTesting security features...")
     
     try:
         from csr import CsrGenerator
@@ -195,7 +216,10 @@ def test_security_features():
 
 def test_flask_app():
     """Test Flask application basic functionality"""
-    print("\n🌐 Testing Flask application...")
+    try:
+        print("\n🌐 Testing Flask application...")
+    except UnicodeEncodeError:
+        print("\nTesting Flask application...")
     
     try:
         from app import app
@@ -222,12 +246,18 @@ def test_flask_app():
 
 def main():
     """Main verification function"""
-    print("🚀 Quick Verification for Secure Cert-Tools")
+    try:
+        print("🚀 Quick Verification for Secure Cert-Tools")
+    except UnicodeEncodeError:
+        print("Quick Verification for Secure Cert-Tools")
     print("=" * 50)
     
     # Check current directory
     if not os.path.exists("app.py"):
-        print("❌ Error: app.py not found. Please run from the project root directory.")
+        try:
+            print("❌ Error: app.py not found. Please run from the project root directory.")
+        except UnicodeEncodeError:
+            print("Error: app.py not found. Please run from the project root directory.")
         return 1
     
     # Run verification tests
@@ -251,7 +281,10 @@ def main():
     
     # Summary
     print("\n" + "=" * 50)
-    print("📊 VERIFICATION SUMMARY")
+    try:
+        print("📊 VERIFICATION SUMMARY")
+    except UnicodeEncodeError:
+        print("VERIFICATION SUMMARY")
     print("=" * 50)
     
     passed_tests = sum(1 for _, result in results if result)
@@ -260,15 +293,26 @@ def main():
     for test_name, result in results:
         print_status(test_name, result)
     
-    print(f"\n📈 Results: {passed_tests}/{total_tests} tests passed")
+    try:
+        print(f"\n📈 Results: {passed_tests}/{total_tests} tests passed")
+    except UnicodeEncodeError:
+        print(f"\nResults: {passed_tests}/{total_tests} tests passed")
     
     if passed_tests == total_tests:
-        print("🎉 ALL VERIFICATIONS PASSED!")
-        print("✅ The application is working correctly and ready to use.")
+        try:
+            print("🎉 ALL VERIFICATIONS PASSED!")
+            print("✅ The application is working correctly and ready to use.")
+        except UnicodeEncodeError:
+            print("ALL VERIFICATIONS PASSED!")
+            print("The application is working correctly and ready to use.")
         return 0
     else:
-        print(f"⚠️ {total_tests - passed_tests} verification(s) failed.")
-        print("❌ Please check the output above and fix any issues.")
+        try:
+            print(f"⚠️ {total_tests - passed_tests} verification(s) failed.")
+            print("❌ Please check the output above and fix any issues.")
+        except UnicodeEncodeError:
+            print(f"WARNING: {total_tests - passed_tests} verification(s) failed.")
+            print("Please check the output above and fix any issues.")
         return 1
 
 if __name__ == "__main__":
