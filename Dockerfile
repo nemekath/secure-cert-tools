@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 LABEL maintainer="Benjamin"
 LABEL description="Secure Cert-Tools - Professional certificate toolkit with CSR generation, validation, analysis, and verification capabilities"
