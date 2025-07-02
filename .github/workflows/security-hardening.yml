@@ -189,19 +189,24 @@ jobs:
         ]
         
         print('Testing log sanitization...')
-        for test_input, should_be_sanitized in test_cases:
+        for i, (test_input, should_be_sanitized) in enumerate(test_cases):
+            print(f'Test case {i+1}: input={repr(test_input)}, should_sanitize={should_be_sanitized}')
             sanitized = sanitize_for_logging(test_input)
+            print(f'  Output: {repr(sanitized)}')
             
             # Check that dangerous content is removed/masked
             if should_be_sanitized:
                 if test_input == sanitized:
-                    print(f'❌ Log sanitization failed for: {test_input}')
+                    print(f'❌ Log sanitization failed for test case {i+1}: {repr(test_input)}')
                     exit(1)
                 else:
-                    print(f'✅ Sanitized: {test_input[:20]}... -> {sanitized[:20]}...')
+                    print(f'✅ Test case {i+1} sanitized correctly')
             else:
                 if test_input != sanitized:
-                    print(f'⚠️  Safe content was modified: {test_input} -> {sanitized}')
+                    print(f'❌ Safe content was modified in test case {i+1}: {repr(test_input)} -> {repr(sanitized)}')
+                    exit(1)
+                else:
+                    print(f'✅ Test case {i+1} preserved correctly')
         
         print('✅ Log security validation completed')
         "
