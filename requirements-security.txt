@@ -1,0 +1,19 @@
+# Security-enhanced requirements for production deployment
+# These add critical security features to the base application
+
+# Rate limiting for DoS protection
+Flask-Limiter==3.8.0
+
+# CSRF protection for state-changing operations
+Flask-WTF==1.2.1
+
+# Enhanced security headers
+Flask-Talisman==1.1.0
+
+# Content Security Policy helper
+flask-csp==1.0.0
+
+# Security scanning tools (development)
+bandit[toml]==1.7.9
+safety==3.2.8
+pip-audit==2.7.3

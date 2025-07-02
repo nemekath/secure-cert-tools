@@ -13,3 +13,7 @@ setuptools>=80.9.0
 Werkzeug==3.1.3
 typing-extensions==4.14.0
 zipp>=3.19.1  # CVE-2023-45853: Path traversal vulnerability in versions < 3.19.1
+
+# Security enhancements
+Flask-Limiter==3.8.0  # Rate limiting for DoS protection
+Flask-WTF==1.2.1      # CSRF protection for state-changing operations

@@ -23,6 +23,12 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 
+# Security enhancements
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_wtf.csrf import CSRFProtect, validate_csrf
+from werkzeug.exceptions import TooManyRequests
+
 from csr import CsrGenerator
 
 app = Flask(__name__)
@@ -33,6 +39,23 @@ app.config['SESSION_COOKIE_SECURE'] = True  # Using HTTPS by default
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024  # 1MB max request size
+
+# CSRF Protection configuration
+app.config['WTF_CSRF_ENABLED'] = True
+app.config['WTF_CSRF_TIME_LIMIT'] = 3600  # 1 hour
+app.config['WTF_CSRF_SSL_STRICT'] = True  # HTTPS enforcement
+
+# Initialize security extensions
+csrf = CSRFProtect(app)
+
+# Rate limiting configuration
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["100 per hour", "20 per minute"],
+    storage_uri="memory://",
+    headers_enabled=True
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -91,6 +114,31 @@ def request_entity_too_large(error):
     }), 413
 
 
+# Error handler for rate limiting
+@app.errorhandler(429)
+def rate_limit_exceeded(error):
+    client_ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    logger.warning(f"Rate limit exceeded from {client_ip}: {error.description}")
+    return jsonify({
+        'error': 'Rate limit exceeded. Please wait before making another request.',
+        'error_type': 'RateLimitExceeded',
+        'retry_after': error.retry_after
+    }), 429
+
+
+# Error handler for CSRF validation
+@app.errorhandler(400)
+def handle_csrf_error(error):
+    if 'CSRF' in str(error):
+        client_ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+        logger.warning(f"CSRF validation failed from {client_ip}")
+        return jsonify({
+            'error': 'CSRF token validation failed. Please refresh the page and try again.',
+            'error_type': 'CSRFError'
+        }), 400
+    return error
+
+
 @app.route('/')
 def index():
     return render_template('modern_index.html')
@@ -110,6 +158,7 @@ def version():
 
 
 @app.route('/generate', methods=['POST'])
+@limiter.limit("10 per minute", error_message="Too many CSR generation requests. Please wait before trying again.")
 def generate_csr():
     try:
         # Log the request (without sensitive data)
@@ -158,6 +207,7 @@ def generate_csr():
 
 
 @app.route('/verify', methods=['POST'])
+@limiter.limit("15 per minute", error_message="Too many verification requests. Please wait before trying again.")
 def verify_csr_private_key():
     """
     Endpoint to verify that a CSR and private key match.
@@ -187,6 +237,7 @@ def verify_csr_private_key():
 
 
 @app.route('/analyze', methods=['POST'])
+@limiter.limit("15 per minute", error_message="Too many analysis requests. Please wait before trying again.")
 def analyze_csr():
     """
     Endpoint to analyze a CSR and extract all information with RFC compliance checking.
@@ -227,6 +278,7 @@ def analyze_csr():
 
 
 @app.route('/verify-certificate', methods=['POST'])
+@limiter.limit("15 per minute", error_message="Too many certificate verification requests. Please wait before trying again.")
 def verify_certificate_private_key():
     """
     Endpoint to verify that a CA-signed certificate and private key match.

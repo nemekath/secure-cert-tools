@@ -1,0 +1,37 @@
+# Production Docker Compose Configuration
+# Uses Gunicorn WSGI server for production deployment
+
+version: '3.8'
+
+services:
+  secure-cert-tools:
+    image: secure-cert-tools:2.4.0
+    ports:
+      - "5555:5555"
+    environment:
+      - FLASK_ENV=production
+      - CERT_DOMAIN=${CERT_DOMAIN:-localhost}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - cert_data:/app/certs
+      # Uncomment the following lines to use custom certificates:
+      # - ./certs/cacert-chain.pem:/run/secrets/cacert-chain.pem:ro
+      # - ./certs/servercert.pem:/run/secrets/servercert.pem:ro
+      # - ./certs/privatekey.pem:/run/secrets/privatekey.pem:ro
+    healthcheck:
+      test: ["CMD", "curl", "-k", "-f", "https://${CERT_DOMAIN:-localhost}:5555/", "||", "curl", "-f", "http://${CERT_DOMAIN:-localhost}:5555/", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+volumes:
+  cert_data:
+    driver: local
