@@ -1,13 +1,16 @@
 /**
  * Session-Based Cryptography Implementation
  * 
- * Provides session-specific encryption for private keys using WebCrypto API
- * and ECDH key exchange to protect against malicious root access.
+ * **SECURITY NOTICE**: This implementation has a critical design flaw.
+ * Private keys are generated in plaintext on the server before encryption,
+ * creating a temporal window where both private and session keys exist
+ * in server memory simultaneously. This does NOT provide protection
+ * against privileged access during key generation.
  * 
- * Security Features:
+ * Current Features:
  * - Browser-generated session entropy
  * - ECDH key exchange with server
- * - AES-GCM encryption for private keys
+ * - AES-GCM encryption for private keys (post-generation only)
  * - Session-specific encryption keys
  */
 

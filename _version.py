@@ -13,8 +13,6 @@ PROJECT_DESCRIPTION = "Secure Cert-Tools - Professional certificate toolkit with
 
 # Security information
 SECURITY_FIXES = [
-    "Session-based encryption",
-    "Enterprise root access protection", 
     "RFC-compliant domain validation",
     "CVE-2024-6345",
     "GHSA-5rjg-fvgr-3xxf", 
@@ -31,7 +29,7 @@ CONTRIBUTORS = {
 
 # Version history
 VERSION_HISTORY = {
-    "2.7.0": "Enterprise Session-Based Encryption & Security Audit: Revolutionary session-based encryption with ECDH key exchange and AES-GCM-256 providing 95% root access vulnerability reduction, 90% memory dump risk reduction, and 85% log exposure reduction. Comprehensive security audit with EXCELLENT rating, complete architecture documentation fixes, production deployment guide, WebCrypto API integration, browser-native security, verified attack resistance, NIST-compliant cryptography, enterprise insider threat protection, and compliance with SOC 2, ISO 27001, NIST frameworks",
+    "2.7.0": "Session-based encryption feature has a critical design flaw. Private keys are generated in plaintext on the server before encryption, creating a temporal window where both private and session keys exist in server memory simultaneously. No true protection against privileged access during key generation phase. Documentation updated to reflect accurate security limitations.",
     "2.6.0": "Enhanced REST API Test Suite: Human-readable validation testing with 100% success rate (10/10 tests), intelligent rate limiting per endpoint, comprehensive field validation for all X.509 subject fields, production-ready API testing with zero failures, robust error recovery with automatic retry logic, clear intent indicators for valid vs invalid data testing, fixed critical boolean evaluation bug in field validation. Offline Deployment Solution: Complete offline deployment package with cross-platform scripts for airgapped environments, compressed Docker image export, and comprehensive offline documentation for secure deployments",
     "2.5.2": "Complete pyOpenSSL elimination: Successfully migrated ALL cryptographic operations from deprecated pyOpenSSL to modern cryptography library. Achieved 100% compatibility with zero functionality loss while eliminating all deprecation warnings and future security risks",
     "2.5.1": "Bug fixes and modernization: Fixed README.md version/repository inconsistencies, enhanced CSR generation with modern cryptography library integration alongside pyOpenSSL compatibility, maintained full backward compatibility while improving future maintainability",

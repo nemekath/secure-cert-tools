@@ -2,8 +2,12 @@
 """
 Session-Based Encryption Security Demonstration
 
-This script demonstrates how session-based encryption protects private keys
-against malicious root access and provides a clear security comparison.
+**SECURITY NOTICE**: This demonstration contains false security claims.
+The session encryption feature has a critical design flaw where private keys
+and session keys coexist in server memory during generation, making the
+demonstrated "protections" ineffective against privileged access.
+
+This script will be updated to accurately reflect the security limitations.
 """
 
 import os
@@ -98,14 +102,14 @@ c7d8e9f0g1h2i3j4k5l6m7n8o9p0q1r2s3t4u5v6w7x8y9z0
     print("❌ Storage access exposes keys at rest")
     print()
     
-    print("WITH Session Encryption (Enhanced Security):")
-    print("✅ Private keys are encrypted with session-specific keys")
-    print("✅ Session keys derived from browser ECDH exchange")
-    print("✅ Root access cannot decrypt without browser session")
-    print("✅ Memory dumps only contain encrypted data")
-    print("✅ Process debugging reveals no plaintext keys")
-    print("✅ Logs contain only encrypted key data")
-    print("✅ No persistent storage of sensitive keys")
+    print("WITH Session Encryption (CLAIMED Security - NOT ACCURATE):")
+    print("❌ Private keys are generated in plaintext before encryption")
+    print("❌ Session keys exist in memory during key generation")
+    print("❌ Root access CAN extract keys during generation window")
+    print("❌ Memory dumps during generation contain both keys")
+    print("❌ Process debugging can reveal plaintext keys")
+    print("⚠️  Only post-generation state is encrypted")
+    print("⚠️  Temporal vulnerability window exists")
     print()
     
     # Demonstrate root access protection
@@ -119,15 +123,15 @@ c7d8e9f0g1h2i3j4k5l6m7n8o9p0q1r2s3t4u5v6w7x8y9z0
     print("1. Memory Dump Attack:")
     print(f"   📋 Root runs: gcore {os.getpid()}")
     print(f"   📋 Searches memory for: '-----BEGIN PRIVATE KEY-----'")
-    print(f"   ✅ Result: Only finds encrypted data ({len(encrypted_data)} bytes)")
-    print(f"   ✅ Cannot decrypt without browser session")
+    print(f"   ❌ VULNERABILITY: During key generation, plaintext private key exists")
+    print(f"   ❌ VULNERABILITY: Session key also exists in same memory space")
     print()
     
     print("2. Process Debug Attack:")
     print(f"   📋 Root runs: gdb -p {os.getpid()}")
     print(f"   📋 Attempts to inspect variables and memory")
-    print(f"   ✅ Result: Session keys are ephemeral and derived")
-    print(f"   ✅ Cannot reconstruct keys without ECDH exchange")
+    print(f"   ❌ VULNERABILITY: Can extract private key during generation")
+    print(f"   ❌ VULNERABILITY: Can extract session key from SessionData object")
     print()
     
     print("3. Log Analysis Attack:")
@@ -150,15 +154,15 @@ c7d8e9f0g1h2i3j4k5l6m7n8o9p0q1r2s3t4u5v6w7x8y9z0
     print()
     
     # Summary
-    print("📊 SECURITY ENHANCEMENT SUMMARY")
+    print("📊 SECURITY ANALYSIS SUMMARY")
     print("-" * 35)
     print()
-    print("Risk Reduction:")
-    print("📈 Root access vulnerability: 95% reduction")
-    print("📈 Memory dump attacks: 90% reduction")  
-    print("📈 Process debugging: 90% reduction")
-    print("📈 Log exposure: 85% reduction")
-    print("📈 Storage attacks: 95% reduction")
+    print("CRITICAL LIMITATIONS:")
+    print("❌ Root access vulnerability: NO reduction during generation")
+    print("❌ Memory dump attacks: NO protection during generation")  
+    print("❌ Process debugging: NO protection during generation")
+    print("⚠️  Post-generation: Some protection for stored encrypted data")
+    print("⚠️  Temporal window: Vulnerable during 6-line execution")
     print()
     
     print("Implementation Benefits:")
@@ -169,8 +173,8 @@ c7d8e9f0g1h2i3j4k5l6m7n8o9p0q1r2s3t4u5v6w7x8y9z0
     print("🎯 Session expiration and cleanup")
     print()
     
-    print("🔐 SESSION-BASED ENCRYPTION PROVIDES ENTERPRISE-GRADE PROTECTION")
-    print("🛡️ PRIVATE KEYS ARE NOW SAFE FROM MALICIOUS ROOT ACCESS")
+    print("⚠️  SESSION-BASED ENCRYPTION HAS CRITICAL DESIGN LIMITATIONS")
+    print("❌ PRIVATE KEYS ARE NOT SAFE FROM PRIVILEGED ACCESS DURING GENERATION")
     print("=" * 70)
 
 
