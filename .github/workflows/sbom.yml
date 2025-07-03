@@ -98,6 +98,11 @@ jobs:
         echo "## Files:" >> release-sbom/README.md
         echo "- \`sbom-python.json\`: CycloneDX JSON format SBOM" >> release-sbom/README.md
         echo "- \`sbom-python.xml\`: CycloneDX XML format SBOM" >> release-sbom/README.md
+        echo "" >> release-sbom/README.md
+        echo "## Security and Compliance:" >> release-sbom/README.md
+        echo "- Essential for offline/airgapped deployments" >> release-sbom/README.md
+        echo "- Enables vulnerability scanning in isolated environments" >> release-sbom/README.md
+        echo "- Supports compliance with security frameworks and regulations" >> release-sbom/README.md
         
         tar -czf sbom-${{ github.ref_name }}.tar.gz -C release-sbom .
     

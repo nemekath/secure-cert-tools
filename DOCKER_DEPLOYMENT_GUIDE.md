@@ -903,6 +903,308 @@ docker commit secure-cert-tools secure-cert-tools:backup-$(date +%Y%m%d)
 
 ---
 
+## Offline/Airgapped Deployment
+
+For environments without internet access, secure facilities, or airgapped networks:
+
+### Overview
+
+Offline deployment enables running Secure Cert-Tools in environments completely isolated from the internet. This is essential for:
+- Government and military installations
+- Financial institutions with strict security policies
+- Manufacturing facilities with isolated networks
+- Research environments requiring complete network isolation
+- High-security data centers
+
+### Offline Package Components
+
+```
+offline-deployment-package/
+├── secure-cert-tools-offline.tar.gz    # Compressed Docker image (~63MB)
+├── deploy-offline-unix.sh              # Automated deployment for macOS/Linux
+├── deploy-offline.ps1                  # PowerShell script for Windows
+├── OFFLINE_DEPLOYMENT_GUIDE.md         # Complete instructions
+└── README-OFFLINE.md                   # Quick start guide
+```
+
+### Quick Offline Deployment
+
+#### macOS/Linux Deployment
+
+```bash
+# 1. Make script executable
+chmod +x deploy-offline-unix.sh
+
+# 2. Run automated deployment
+./deploy-offline-unix.sh
+
+# 3. Verify deployment
+curl -k https://localhost:5555/version
+```
+
+#### Windows PowerShell Deployment
+
+```powershell
+# 1. Run PowerShell as Administrator (recommended)
+
+# 2. Execute deployment script
+.\deploy-offline.ps1
+
+# 3. Verify deployment
+Invoke-WebRequest -Uri "https://localhost:5555/version" -SkipCertificateCheck
+```
+
+### Manual Offline Deployment
+
+For environments requiring manual installation:
+
+```bash
+# 1. Verify Docker installation
+docker --version
+docker info
+
+# 2. Load the offline Docker image
+docker load -i secure-cert-tools-offline.tar.gz
+
+# 3. Verify image loaded successfully
+docker images | grep secure-cert-tools-offline
+
+# 4. Run the container in production mode
+docker run -d \
+  --name secure-cert-tools-offline \
+  -p 5555:5555 \
+  -e FLASK_ENV=production \
+  --restart unless-stopped \
+  --memory=512m \
+  --cpus=1.0 \
+  secure-cert-tools-offline:latest
+
+# 5. Check container status
+docker ps | grep secure-cert-tools-offline
+
+# 6. Verify application is running
+curl -k https://localhost:5555/version
+
+# 7. Test functionality
+curl -k https://localhost:5555/
+```
+
+### Advanced Offline Configuration
+
+#### Custom Network Configuration
+
+```bash
+# Create isolated network
+docker network create --driver bridge secure-offline-network
+
+# Run container on custom network
+docker run -d \
+  --name secure-cert-tools-offline \
+  --network secure-offline-network \
+  -p 5555:5555 \
+  -e FLASK_ENV=production \
+  secure-cert-tools-offline:latest
+```
+
+#### Custom SSL Certificates
+
+```bash
+# Mount custom certificates for production
+docker run -d \
+  --name secure-cert-tools-offline \
+  -p 5555:5555 \
+  -e FLASK_ENV=production \
+  -e CERT_DOMAIN=your-internal-domain.local \
+  -v /path/to/your.crt:/app/certs/server.crt:ro \
+  -v /path/to/your.key:/app/certs/server.key:ro \
+  secure-cert-tools-offline:latest
+```
+
+#### Resource Constraints
+
+```bash
+# Deployment with specific resource limits
+docker run -d \
+  --name secure-cert-tools-offline \
+  -p 5555:5555 \
+  -e FLASK_ENV=production \
+  --memory=256m \
+  --cpus=0.5 \
+  --pids-limit=100 \
+  --read-only \
+  --tmpfs /tmp \
+  -v cert_data:/app/certs \
+  secure-cert-tools-offline:latest
+```
+
+### Creating Your Own Offline Package
+
+If you need to create a custom offline package:
+
+```bash
+# 1. Build the Docker image with custom tag
+docker build -t secure-cert-tools-offline:custom .
+
+# 2. Export as compressed archive
+docker save secure-cert-tools-offline:custom | gzip  secure-cert-tools-custom.tar.gz
+
+# 3. Verify archive integrity
+file secure-cert-tools-custom.tar.gz
+ls -lh secure-cert-tools-custom.tar.gz
+
+# 4. Test the exported image
+docker rmi secure-cert-tools-offline:custom  # Remove original
+docker load -i secure-cert-tools-custom.tar.gz  # Load from archive
+docker run --rm -p 5555:5555 secure-cert-tools-offline:custom
+```
+
+### Offline Security Considerations
+
+#### Network Isolation Verification
+
+```bash
+# Verify container has no internet access
+docker exec secure-cert-tools-offline ping -c 3 8.8.8.8
+# Should fail with "ping: bad address" or network unreachable
+
+# Check DNS resolution
+docker exec secure-cert-tools-offline nslookup google.com
+# Should fail in truly airgapped environment
+
+# Verify no outbound network connections
+docker exec secure-cert-tools-offline netstat -an
+```
+
+#### Container Security Hardening
+
+```bash
+# Run with enhanced security
+docker run -d \
+  --name secure-cert-tools-offline \
+  -p 127.0.0.1:5555:5555 \  # Bind to localhost only
+  -e FLASK_ENV=production \
+  --read-only \
+  --tmpfs /tmp:noexec,nosuid,size=100m \
+  --cap-drop=ALL \
+  --cap-add=CHOWN \
+  --cap-add=SETGID \
+  --cap-add=SETUID \
+  --security-opt=no-new-privileges \
+  --user appuser \
+  -v cert_data:/app/certs \
+  secure-cert-tools-offline:latest
+```
+
+### Offline Monitoring and Maintenance
+
+#### Health Monitoring
+
+```bash
+# Monitor container health
+watch -n 30 'docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"'
+
+# Check application health endpoint
+watch -n 60 'curl -k -s https://localhost:5555/version | jq .'
+
+# Monitor resource usage
+docker stats secure-cert-tools-offline
+```
+
+#### Log Management
+
+```bash
+# Configure log rotation for offline environment
+docker run -d \
+  --name secure-cert-tools-offline \
+  -p 5555:5555 \
+  -e FLASK_ENV=production \
+  --log-driver json-file \
+  --log-opt max-size=10m \
+  --log-opt max-file=5 \
+  -v /var/log/secure-cert-tools:/app/logs \
+  secure-cert-tools-offline:latest
+
+# View logs
+docker logs -f secure-cert-tools-offline
+tail -f /var/log/secure-cert-tools/app.log
+```
+
+### Troubleshooting Offline Deployment
+
+#### Common Issues
+
+**1. Docker Image Loading Fails**
+```bash
+# Check file integrity
+file secure-cert-tools-offline.tar.gz
+md5sum secure-cert-tools-offline.tar.gz
+
+# Check available disk space
+df -h
+
+# Try loading with verbose output
+docker load --input secure-cert-tools-offline.tar.gz
+```
+
+**2. Container Won't Start**
+```bash
+# Check Docker daemon status
+sudo systemctl status docker
+
+# Inspect container configuration
+docker inspect secure-cert-tools-offline
+
+# Check for port conflicts
+netstat -tulpn | grep 5555
+lsof -i :5555
+```
+
+**3. Application Not Accessible**
+```bash
+# Check container logs
+docker logs secure-cert-tools-offline
+
+# Verify port mapping
+docker port secure-cert-tools-offline
+
+# Test internal connectivity
+docker exec secure-cert-tools-offline curl -k https://localhost:5555/version
+```
+
+**4. SSL Certificate Issues**
+```bash
+# Check certificate files
+docker exec secure-cert-tools-offline ls -la /app/certs/
+
+# Regenerate self-signed certificates
+docker exec secure-cert-tools-offline rm -f /app/certs/server.*
+docker restart secure-cert-tools-offline
+
+# Test with certificate validation disabled
+curl -k https://localhost:5555/version
+```
+
+### Offline Performance Optimization
+
+```bash
+# Optimize for minimal resource usage
+docker run -d \
+  --name secure-cert-tools-offline \
+  -p 5555:5555 \
+  -e FLASK_ENV=production \
+  --memory=128m \
+  --cpus=0.25 \
+  --oom-kill-disable=false \
+  secure-cert-tools-offline:latest
+
+# Monitor performance
+docker stats --no-stream secure-cert-tools-offline
+```
+
+For complete offline deployment documentation, see `OFFLINE_DEPLOYMENT_GUIDE.md`.
+
+---
+
 ## Troubleshooting
 
 ### Common Issues

@@ -93,6 +93,32 @@ docker run -p 5555:5555 -e FLASK_ENV=development secure-cert-tools
 docker-compose -f docker-compose.dev.yml up -d
 ```
 
+### Offline Deployment
+
+For environments without internet access or for secure offline installations:
+
+**Quick Offline Setup:**
+```bash
+# macOS/Linux
+chmod +x deploy-offline-unix.sh
+./deploy-offline-unix.sh
+
+# Windows (PowerShell)
+.\deploy-offline.ps1
+```
+
+**Manual Offline Setup:**
+```bash
+# Load the Docker image
+docker load -i secure-cert-tools-offline.tar.gz
+
+# Run the container
+docker run -d -p 5555:5555 --name secure-cert-tools-offline \
+  -e FLASK_ENV=production secure-cert-tools-offline:latest
+```
+
+See `OFFLINE_DEPLOYMENT_GUIDE.md` for complete offline deployment instructions and airgapped environment setup.
+
 ### Production Deployment
 
 The application automatically uses Gunicorn in production mode:

@@ -34,6 +34,7 @@ Flask's development server:
 - ✅ Streamlined template system
 - ✅ Flask-WTF CSRF protection
 - ✅ Flask-Limiter rate limiting
+- ✅ Offline deployment capability for airgapped environments
 
 ## Development Mode
 
@@ -313,5 +314,116 @@ Both modes auto-generate self-signed certificates. For production:
    ```bash
    docker-compose logs | grep gunicorn
    ```
+
+## Offline Deployment Mode
+
+For environments without internet access, such as airgapped networks or secure facilities:
+
+### When to Use
+- Airgapped networks without internet connectivity
+- High-security environments with restricted network access
+- Locations with unreliable internet connections
+- Corporate environments with strict security policies
+- Government or military deployments
+
+### Features
+- Pre-built Docker image package (no internet required)
+- Platform-specific deployment scripts
+- Self-contained installation package
+- Complete offline documentation
+- No external dependencies
+
+### Offline Package Contents
+- `secure-cert-tools-offline.tar.gz`: Compressed Docker image (~63MB)
+- `deploy-offline-unix.sh`: Deployment script for macOS/Linux
+- `deploy-offline.ps1`: PowerShell script for Windows
+- `OFFLINE_DEPLOYMENT_GUIDE.md`: Complete offline instructions
+- `README-OFFLINE.md`: Quick start guide
+
+### Quick Offline Deployment
+
+**macOS/Linux:**
+```bash
+# Make script executable and run
+chmod +x deploy-offline-unix.sh
+./deploy-offline-unix.sh
+```
+
+**Windows (PowerShell):**
+```powershell
+# Run PowerShell script
+.\deploy-offline.ps1
+```
+
+### Manual Offline Deployment
+
+```bash
+# 1. Load the Docker image
+docker load -i secure-cert-tools-offline.tar.gz
+
+# 2. Verify image loaded
+docker images | grep secure-cert-tools-offline
+
+# 3. Run the container
+docker run -d -p 5555:5555 --name secure-cert-tools-offline \
+  -e FLASK_ENV=production \
+  --restart unless-stopped \
+  secure-cert-tools-offline:latest
+
+# 4. Verify deployment
+curl -k https://localhost:5555/version
+```
+
+### Creating Offline Package
+
+If you need to create your own offline package:
+
+```bash
+# 1. Build the Docker image
+docker build -t secure-cert-tools-offline:latest .
+
+# 2. Export as tar archive
+docker save secure-cert-tools-offline:latest | gzip > secure-cert-tools-offline.tar.gz
+
+# 3. Package with deployment scripts
+tar -czf offline-deployment-package.tar.gz \
+  secure-cert-tools-offline.tar.gz \
+  deploy-offline-unix.sh \
+  deploy-offline.ps1 \
+  OFFLINE_DEPLOYMENT_GUIDE.md \
+  README-OFFLINE.md
+```
+
+### Offline Security Considerations
+
+- **No external network calls**: Application runs entirely offline
+- **Self-signed certificates**: Auto-generated for HTTPS (replace with custom certs for production)
+- **Local storage only**: No cloud dependencies or external logging
+- **Isolated environment**: Perfect for security-sensitive deployments
+
+### Troubleshooting Offline Deployment
+
+**Image Loading Issues:**
+```bash
+# Check Docker is running
+docker info
+
+# Verify tar file integrity
+file secure-cert-tools-offline.tar.gz
+
+# Load with verbose output
+docker load -i secure-cert-tools-offline.tar.gz
+```
+
+**Container Startup Issues:**
+```bash
+# Check container logs
+docker logs secure-cert-tools-offline
+
+# Check container status
+docker ps -a
+```
+
+For complete offline deployment instructions, see `OFFLINE_DEPLOYMENT_GUIDE.md`.
 
 This deployment mode separation ensures optimal performance, security, and debugging capabilities for each environment.
