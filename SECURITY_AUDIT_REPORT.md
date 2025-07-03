@@ -10,7 +10,7 @@
 
 ## Executive Summary
 
-This security audit evaluates the session-based encryption implementation for the Secure CSR Generator. The system implements enterprise-grade cryptographic protections to mitigate root access vulnerabilities, memory dump attacks, and insider threats.
+This security audit evaluates the session-based encryption implementation for the Secure CSR Generator. The system implements enhanced cryptographic protections to mitigate root access vulnerabilities, memory dump attacks, and insider threats.
 
 ### Overall Security Rating: **EXCELLENT** ✅
 
@@ -209,7 +209,7 @@ The session-based encryption implementation represents a significant security en
 
 **APPROVED FOR PRODUCTION DEPLOYMENT**
 
-This implementation is ready for production use and provides enterprise-grade security for certificate generation workflows.
+This implementation is ready for production use and provides enhanced security for certificate generation workflows.
 
 ---
 

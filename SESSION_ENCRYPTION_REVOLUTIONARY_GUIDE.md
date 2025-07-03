@@ -640,19 +640,19 @@ curl https://your-server/session-stats
 ### Compliance Benefits
 
 **SOC 2 Type II**:
-- Demonstrates administrative access controls
-- Proves private key protection mechanisms
-- Shows comprehensive audit logging
+- Supports administrative access control requirements
+- Contributes to private key protection mechanisms
+- Enables comprehensive audit logging
 
 **GDPR Compliance**:
-- Data minimization (no plaintext key storage)
-- Privacy by design implementation
-- User control over private keys
+- Supports data minimization (no plaintext key storage)
+- Implements privacy by design principles
+- Enhances user control over private keys
 
 **Industry Standards**:
-- NIST Cybersecurity Framework alignment
-- ISO 27001 information security controls
-- PCI DSS cryptographic key protection
+- Aligns with NIST Cybersecurity Framework principles
+- Supports ISO 27001 information security controls
+- Contributes to PCI DSS cryptographic key protection
 
 ---
 
