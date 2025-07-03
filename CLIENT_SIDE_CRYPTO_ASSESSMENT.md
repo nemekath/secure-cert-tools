@@ -1021,7 +1021,7 @@ The migration to client-side cryptography is **technically feasible and strategi
 1. **🔒 Enhanced Security**: Complete elimination of server-side private key exposure
 2. **🏢 Enterprise Compliance**: Meets strict security requirements for private key handling  
 3. **⚡ Improved Performance**: Reduced server load and better user experience
-4. **🌐 Modern Architecture**: Leverages cutting-edge browser cryptography capabilities
+4. **🌐 Modern Architecture**: Leverages established browser cryptography capabilities
 5. **📱 Offline Capability**: Works in air-gapped environments for maximum security
 
 ### Implementation Recommendation

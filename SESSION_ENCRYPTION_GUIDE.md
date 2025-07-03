@@ -2,7 +2,7 @@
 
 ## Overview
 
-The session-based encryption feature provides enterprise-grade protection for private keys by using browser-session-specific encryption. This prevents malicious root access from recovering plaintext private keys while maintaining the existing architecture and user experience.
+The session-based encryption feature provides enhanced protection for private keys by using browser-session-specific encryption. This reduces the risk of malicious root access recovering plaintext private keys while maintaining the existing architecture and user experience.
 
 ## How It Works
 

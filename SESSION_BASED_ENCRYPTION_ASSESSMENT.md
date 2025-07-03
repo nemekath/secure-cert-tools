@@ -1067,7 +1067,7 @@ def audit_log_session_crypto(session_id, operation, client_ip, success, details=
 
 ### Executive Summary
 
-Session-based encryption provides **exceptional protection against malicious root access** while requiring minimal architectural changes. The solution creates a **cryptographic barrier** that renders root access ineffective for private key extraction.
+Session-based encryption provides **enhanced protection against malicious root access** while requiring minimal architectural changes.
 
 ### Key Benefits Delivered
 
@@ -1087,9 +1087,9 @@ Session-based encryption provides **exceptional protection against malicious roo
 
 ### Strategic Impact
 
-This implementation transforms Secure Cert-Tools into a **root-access-resistant certificate toolkit** that maintains trust even in compromised environments. The session-based encryption model provides:
+This implementation enhances Secure Cert-Tools by reducing risks associated with compromised environments. The session-based encryption model provides:
 
-- **Enterprise-grade security** meeting highest compliance standards
+- **Enhanced security** meeting compliance standards
 - **Zero-trust architecture** principles for cryptographic operations
 - **Competitive advantage** over traditional server-side solutions
 - **Future-proof security model** adaptable to emerging threats

@@ -145,7 +145,7 @@ Python 3.9+
 - **Hardware Support**: AES-NI, secure random number generation
 
 #### Session-Based Encryption Layer
-The application implements a revolutionary dual-mode architecture with optional session-based encryption:
+The application implements an enhanced dual-mode architecture with optional session-based encryption:
 
 **Standard Mode (Stateless)**:
 - Traditional CSR generation

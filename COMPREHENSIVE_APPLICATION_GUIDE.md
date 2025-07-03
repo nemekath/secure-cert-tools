@@ -39,10 +39,10 @@
 - **Cryptographic Security**: Only secure algorithms (RSA ≥2048-bit, ECDSA P-256+)
 - **RFC Compliance**: Validates domains according to RFC 1035, RFC 5280, RFC 6125
 - **Enterprise Security**: CSRF protection, rate limiting, input sanitization
-- **🚀 Revolutionary Session Encryption**: Root-access-resistant private key protection
+- **🔒 Advanced Session Encryption**: Enhanced private key protection using browser-based cryptography
 - **Deployment Ready**: Docker support, HTTPS by default, production WSGI server
 
-> **📖 For complete understanding of the revolutionary session-based encryption system, see [`SESSION_ENCRYPTION_REVOLUTIONARY_GUIDE.md`](SESSION_ENCRYPTION_REVOLUTIONARY_GUIDE.md) - the definitive theory-to-practice explanation.**
+> **📖 For complete understanding of the advanced session-based encryption system, see [`SESSION_ENCRYPTION_REVOLUTIONARY_GUIDE.md`](SESSION_ENCRYPTION_REVOLUTIONARY_GUIDE.md) - a comprehensive theory-to-practice explanation.**
 
 ---
 
