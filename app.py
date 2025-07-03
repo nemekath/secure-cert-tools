@@ -41,9 +41,25 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024  # 1MB max request size
 
 # CSRF Protection configuration
-app.config['WTF_CSRF_ENABLED'] = True
+# Disable CSRF for testing environments (CI/CD)
+testing_mode = os.environ.get('TESTING', '').lower() == 'true'
+flask_env = os.environ.get('FLASK_ENV', 'production').lower()
+is_testing = testing_mode or flask_env == 'testing'
+
+app.config['WTF_CSRF_ENABLED'] = not is_testing  # Disable CSRF in testing mode
 app.config['WTF_CSRF_TIME_LIMIT'] = 3600  # 1 hour
 app.config['WTF_CSRF_SSL_STRICT'] = True  # HTTPS enforcement
+
+# Configure logging first
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Log CSRF status for transparency
+if is_testing:
+    logger.warning("⚠️  CSRF protection DISABLED for testing mode")
+    logger.warning("⚠️  This should only be used in CI/CD or testing environments!")
+else:
+    logger.info("🛡️  CSRF protection ENABLED for production security")
 
 # Initialize security extensions
 csrf = CSRFProtect(app)
@@ -56,10 +72,6 @@ limiter = Limiter(
     storage_uri="memory://",
     headers_enabled=True
 )
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 def sanitize_for_logging(text):

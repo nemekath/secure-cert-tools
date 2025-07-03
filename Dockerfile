@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 LABEL maintainer="Benjamin"
 LABEL description="Secure Cert-Tools - Professional certificate toolkit with CSR generation, validation, analysis, and verification capabilities"
-LABEL version="2.5.0"
+LABEL version="2.6.0"
 LABEL security.fixes="CVE-2024-6345,GHSA-5rjg-fvgr-3xxf"
 
 # Set working directory

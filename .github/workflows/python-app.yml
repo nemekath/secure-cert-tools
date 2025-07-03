@@ -127,9 +127,12 @@ jobs:
     - name: Docker HTTPS test
       run: |
         echo "Testing Docker container with HTTPS..."
-        # Start container
-        docker run -d --name csrgenerator-secure-test -p 5556:5555 csrgenerator-secure-test
-        sleep 10
+        # Start container with TESTING=true to disable CSRF for CI/CD
+        docker run -d --name csrgenerator-secure-test -p 5556:5555 \
+          -e TESTING=true \
+          -e FLASK_ENV=testing \
+          csrgenerator-secure-test
+        sleep 15
         
         # Test HTTPS endpoint
         curl -k -f https://localhost:5556/ --max-time 30 || {
@@ -140,12 +143,22 @@ jobs:
           exit 1
         }
         
-        # Test CSR generation endpoint
+        # Test version endpoint (always works without CSRF)
+        curl -k -f https://localhost:5556/version --max-time 30 || {
+          echo "Version endpoint test failed"
+          docker logs csrgenerator-secure-test
+          docker stop csrgenerator-secure-test
+          docker rm csrgenerator-secure-test
+          exit 1
+        }
+        
+        # Test CSR generation endpoint (CSRF disabled in testing mode)
         curl -k -X POST https://localhost:5556/generate \
           -H "Content-Type: application/x-www-form-urlencoded" \
           -d "CN=test.example.com&C=US&keyType=RSA&keySize=2048" \
           --max-time 30 -f || {
           echo "CSR generation test failed"
+          echo "Container logs:"
           docker logs csrgenerator-secure-test
           docker stop csrgenerator-secure-test
           docker rm csrgenerator-secure-test

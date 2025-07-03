@@ -5,7 +5,7 @@ version: '3.8'
 
 services:
   secure-cert-tools-dev:
-    image: secure-cert-tools:2.4.0
+    image: secure-cert-tools:2.6.0
     ports:
       - "5555:5555"
     environment:
