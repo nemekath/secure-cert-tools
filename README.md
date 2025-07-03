@@ -43,8 +43,8 @@ Secure Cert-Tools is a web-based application that provides secure CSR generation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/csrgenerator-secure.git
-   cd csrgenerator-secure
+   git clone https://github.com/nemekath/secure-cert-tools.git
+   cd secure-cert-tools
    ```
 
 2. **Install dependencies**
@@ -190,7 +190,9 @@ Parameters:
 
 ## Testing
 
-Run the comprehensive test suite:
+### Comprehensive Test Suite
+
+Run the complete test suite with coverage:
 
 ```bash
 # Install development dependencies
@@ -198,6 +200,41 @@ pip install -r requirements-dev.txt
 
 # Run all tests with coverage
 pytest tests.py test_security_hardening.py test_csrf_security.py test_enhanced_security.py --cov=app --cov=csr --cov=_version --cov-report=term-missing -v
+```
+
+### API Testing (v2.6.0+)
+
+**Enhanced REST API Test Suite** with human-readable validation:
+
+```bash
+# Start the server first
+python start_server.py --dev
+
+# In another terminal, run API tests
+python final_optimized_api_test.py
+```
+
+**Features:**
+- ✅ **100% Success Rate**: Intelligent rate limiting ensures zero test failures
+- 🧪 **Clear Intent Indicators**: Explicit VALID vs INVALID data testing
+- 🎯 **Comprehensive Coverage**: All API endpoints, key types, and validation scenarios
+- ⚡ **Optimized Performance**: ~60 second duration with intelligent delays
+- 🔄 **Robust Error Handling**: Automatic retry logic with exponential backoff
+- 📊 **Human-Readable Output**: Clear test intentions and expected outcomes
+
+**Test Coverage:**
+- All X.509 subject fields (CN, C, ST, L, O, OU)
+- Multiple key types (RSA 2048/4096, ECDSA P-256/384)
+- Subject Alternative Names and private domain support
+- Field validation with proper error handling
+- CSR verification and analysis
+- Error handling with malformed data
+
+**Debug Mode:**
+```bash
+# For troubleshooting validation issues
+python debug_validation.py
+```
 
 # Run core tests only
 pytest tests.py -v
@@ -214,13 +251,15 @@ python scripts/validate_tests.py
 
 ### Test Suite Overview
 
-The comprehensive test suite includes **185+ tests** with **89% code coverage**:
+The comprehensive test suite includes **254+ tests** with **71% code coverage**:
 
 #### Core Test Files
 - **tests.py** (136 tests): Core functionality, API endpoints, validation logic
+- **test_api_comprehensive.py** (20 tests): Complete API endpoint testing and workflows
+- **test_comprehensive.py** (34 tests): Integration tests and CSRF workflows
+- **test_csrf_security.py** (25 tests): CSRF protection and bypass attempt testing
+- **test_enhanced_security.py** (17 tests): Enhanced security features and headers
 - **test_security_hardening.py** (22 tests): Security-focused testing and attack prevention
-- **test_additional_coverage.py** (23 tests): Edge cases, error handling, and coverage improvements
-- **test_final_push.py** (4 tests): Specific uncovered line coverage
 
 #### Test Categories
 - **Functional Tests**: CSR generation, validation, certificate verification
@@ -231,10 +270,10 @@ The comprehensive test suite includes **185+ tests** with **89% code coverage**:
 - **Integration Testing**: End-to-end workflows and component interaction
 
 #### Coverage Breakdown
-- **app.py**: 80% coverage (Flask endpoints, error handling, security features)
-- **csr.py**: 91% coverage (Core CSR logic, validation, cryptographic operations)
+- **app.py**: 64% coverage (Flask endpoints, error handling, security features)
+- **csr.py**: 73% coverage (Core CSR logic, validation, cryptographic operations)
 - **_version.py**: 100% coverage (Version information and metadata)
-- **Overall**: 89% total coverage across core codebase
+- **Overall**: 71% total coverage across core codebase
 
 ## Configuration
 
@@ -311,10 +350,14 @@ Security enhancements and additional features by Benjamin (nemekath).
 
 ## Version Information
 
-Current version: 2.4.0
-- Comprehensive security hardening
-- 185+ tests with 89% code coverage including 22+ security-focused tests
-- Attack prevention (XSS, injection, file parsing)
-- Enhanced validation and error handling with extensive edge case coverage
+Current version: 2.6.0
+- **Enhanced REST API Test Suite**: Human-readable validation testing with 100% success rate
+- **Intelligent Rate Limiting**: Per-endpoint rate limiting with automatic retry logic
+- **Comprehensive Field Validation**: Tests all X.509 subject fields with proper error handling
+- **Production-Ready API Testing**: Zero failures with robust error recovery
+- **Human-Readable Output**: Clear intent indicators for valid vs invalid data testing
+- 254+ tests with 71% code coverage including 64+ security-focused tests
+- Complete pyOpenSSL deprecation elimination (336 → 0 warnings)
+- Comprehensive security hardening and attack prevention
 - Advanced certificate verification with encrypted key support
-- Production-ready deployment options
+- Modern cryptography library implementation
