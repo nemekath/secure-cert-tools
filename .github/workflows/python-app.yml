@@ -32,8 +32,9 @@ jobs:
       run: |
         echo "Checking for security vulnerabilities..."
         python -c "
-        from pkg_resources import get_distribution
+        import importlib.metadata
         import sys
+        from packaging import version
         
         # Check critical packages
         packages = {
@@ -45,11 +46,13 @@ jobs:
         
         for package, min_version in packages.items():
             try:
-                version = get_distribution(package).version
-                print(f'{package}: {version}')
-                if package == 'setuptools' and version < min_version:
-                    print(f'ERROR: {package} {version} is vulnerable! Minimum required: {min_version}')
+                pkg_version = importlib.metadata.version(package)
+                print(f'{package}: {pkg_version}')
+                if version.parse(pkg_version) < version.parse(min_version):
+                    print(f'ERROR: {package} {pkg_version} is vulnerable! Minimum required: {min_version}')
                     sys.exit(1)
+            except importlib.metadata.PackageNotFoundError:
+                print(f'WARNING: {package} not found, skipping check')
             except Exception as e:
                 print(f'ERROR: Could not check {package}: {e}')
                 sys.exit(1)

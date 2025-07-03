@@ -67,13 +67,14 @@ def run_individual_tests():
 
 def main():
     """Main test runner"""
-    # Set UTF-8 encoding for better Windows compatibility
+    # Set UTF-8 encoding for better cross-platform compatibility
     try:
         import io
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+        if hasattr(sys.stdout, 'buffer'):
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
         print("🚀 Starting Comprehensive Test Suite for Secure Cert-Tools")
-    except (AttributeError, UnicodeError):
-        # Fallback to ASCII-safe output for Windows CI/CD
+    except (AttributeError, UnicodeError, OSError):
+        # Fallback to ASCII-safe output for CI/CD environments
         print("Starting Comprehensive Test Suite for Secure Cert-Tools")
     
     print(f"Python: {sys.version}")
