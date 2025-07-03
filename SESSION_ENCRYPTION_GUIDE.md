@@ -39,7 +39,7 @@ The session-based encryption feature provides enhanced protection for private ke
 ### Log Exposure Protection (85% Risk Reduction)
 - **Before**: Keys might leak in debug logs or crash dumps
 - **After**: Only encrypted data appears in logs
-- **Compliance**: Meets enterprise security requirements
+- **Compliance**: Supports security best practices
 
 ### Process Debugging Protection
 - **Before**: Debugger could extract keys from running process
@@ -192,10 +192,10 @@ The `demo_session_security.py` script demonstrates:
 - **WebCrypto**: W3C Web Cryptography API
 
 ### Security Frameworks
-- **NIST Cybersecurity Framework**: Identity protection controls
-- **ISO 27001**: Information security management
-- **SOC 2 Type II**: Security and availability controls
-- **GDPR**: Privacy by design implementation
+- **NIST Cybersecurity Framework**: Supports identity protection controls
+- **ISO 27001**: Aligns with information security management practices
+- **SOC 2 Type II**: Contributes to security and availability controls
+- **GDPR**: Implements privacy by design principles
 
 ## Troubleshooting
 
@@ -281,9 +281,9 @@ app.config.update({
 - **Incident Response**: Plan for potential key compromise
 - **Regular Audits**: Verify encryption is working as expected
 
-## Future Enhancements
+### Future Enhancements
 
-### Planned Features
+### Potential Features
 - **Key Rotation**: Automatic session key rotation
 - **Hardware Security**: TPM/HSM integration support
 - **Enterprise SSO**: Integration with SAML/OAuth providers
@@ -291,10 +291,10 @@ app.config.update({
 - **Load Balancing**: Session affinity for clustered deployments
 
 ### Research Areas
-- **Post-Quantum**: Migration to quantum-resistant algorithms
-- **Zero-Knowledge**: Client-side key generation with ZKP
-- **Homomorphic**: Encrypted computation capabilities
-- **Blockchain**: Distributed key management integration
+- **Post-Quantum**: Potential migration to quantum-resistant algorithms
+- **Zero-Knowledge**: Possible client-side key generation with ZKP
+- **Homomorphic**: Research into encrypted computation capabilities
+- **Blockchain**: Investigation of distributed key management integration
 
 ---
 
