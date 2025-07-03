@@ -314,7 +314,8 @@ def _generate_csr_with_session_encryption(client_ip):
         return jsonify(response_data), 200
         
     except Exception as e:
-        logger.error(f"Session-encrypted CSR generation failed from {client_ip}: {str(e)}")
+        sanitized_error = sanitize_for_logging(str(e))
+        logger.error(f"Session-encrypted CSR generation failed from {client_ip}: {sanitized_error}")
         # Fallback to standard generation
         logger.info(f"⚠️ Falling back to standard CSR generation for {client_ip}")
         return _generate_csr_standard(client_ip)
@@ -344,10 +345,6 @@ def _generate_csr_standard(client_ip):
         
         logger.info(f"✅ Standard CSR generated successfully for {client_ip}")
         return jsonify(response_data), 200
-        
-    except Exception as e:
-        logger.error(f"Standard CSR generation failed from {client_ip}: {str(e)}")
-        raise
         
     except KeyError as e:
         logger.warning(f"CSR generation failed - invalid key/curve from {client_ip}: {str(e)}")
@@ -384,7 +381,8 @@ def _generate_csr_standard(client_ip):
                 'error_type': 'RequestTooLarge'
             }), 413
         
-        logger.error(f"CSR generation failed - unexpected error from {client_ip}: {str(e)}")
+        sanitized_error = sanitize_for_logging(str(e))
+        logger.error(f"Standard CSR generation failed from {client_ip}: {sanitized_error}")
         return jsonify({'error': 'An unexpected error occurred during CSR generation'}), 500
 
 
