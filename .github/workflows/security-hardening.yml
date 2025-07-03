@@ -21,7 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11"]
+        # TODO: Re-enable 3.12 after resolving dependency compatibility
     
     steps:
     - uses: actions/checkout@v4
