@@ -199,8 +199,9 @@ class TestRSAKeyGeneration:
         }
         generator = CsrGenerator(csr_info)
         
-        assert generator.keypair.bits() == 2048
-        assert generator.keypair.type() == 6  # RSA type
+        assert generator.keypair.key_size == 2048
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        assert isinstance(generator.keypair, rsa.RSAPrivateKey)
         assert generator.csr is not None
         assert generator.private_key is not None
 
@@ -213,7 +214,7 @@ class TestRSAKeyGeneration:
         }
         generator = CsrGenerator(csr_info)
         
-        assert generator.keypair.bits() == 4096
+        assert generator.keypair.key_size == 4096
         assert generator.csr is not None
         assert generator.private_key is not None
 
@@ -628,13 +629,7 @@ class TestErrorHandling:
     def client(self):
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False  # Disable CSRF for error testing
-        
-        # Disable rate limiting for testing
-        from flask_limiter.util import get_ipaddr
-        original_get_ipaddr = get_ipaddr
-        
-        def mock_get_ipaddr():
-            return "127.0.0.1"
+        app.config['RATELIMIT_STORAGE_URL'] = "memory://"  # Use in-memory storage for testing
         
         with app.test_client() as client:
             yield client

@@ -1,9 +1,9 @@
 import pytest
-import OpenSSL.crypto
 import re
 import json
 from csr import CsrGenerator
 from app import app
+from cryptography.hazmat.primitives.asymmetric import rsa, ec
 
 
 class TestGeneration:
@@ -20,13 +20,13 @@ class TestGeneration:
 
     def test_keypair_type(self, csr_info):
         csr = CsrGenerator(csr_info)
-        assert isinstance(csr.keypair, OpenSSL.crypto.PKey)
+        assert isinstance(csr.keypair, rsa.RSAPrivateKey)
 
     def test_keypair_type_ecdsa(self, csr_info):
         csr_info['keyType'] = 'ECDSA'
         csr_info['curve'] = 'P-256'
         csr = CsrGenerator(csr_info)
-        assert isinstance(csr.keypair, OpenSSL.crypto.PKey)
+        assert isinstance(csr.keypair, ec.EllipticCurvePrivateKey)
 
     def test_keypair_curve_default(self, csr_info):
         csr_info['keyType'] = 'ECDSA'
@@ -35,7 +35,7 @@ class TestGeneration:
 
     def test_keypair_bits_default(self, csr_info):
         csr = CsrGenerator(csr_info)
-        assert csr.keypair.bits() == 2048
+        assert csr.keypair.key_size == 2048
 
     def test_keypair_1024_bits_rejected(self, csr_info):
         """Test that 1024-bit keys are rejected for security reasons"""
@@ -46,7 +46,7 @@ class TestGeneration:
     def test_keypair_4096_bits(self, csr_info):
         csr_info['keySize'] = 4096
         csr = CsrGenerator(csr_info)
-        assert csr.keypair.bits() == 4096
+        assert csr.keypair.key_size == 4096
 
     def test_csr_length(self, csr_info):
         csr = CsrGenerator(csr_info)
@@ -215,11 +215,11 @@ class TestSecurity:
         # Valid key sizes should work
         csr_info['keySize'] = 2048
         csr = CsrGenerator(csr_info)
-        assert csr.keypair.bits() == 2048
+        assert csr.keypair.key_size == 2048
         
         csr_info['keySize'] = 4096
         csr = CsrGenerator(csr_info)
-        assert csr.keypair.bits() == 4096
+        assert csr.keypair.key_size == 4096
         
         # Insecure key sizes should be rejected
         insecure_sizes = [512, 1024, 1536, 3072, 8192]
@@ -236,7 +236,7 @@ class TestSecurity:
     def test_rsa_key_type(self, csr_info):
         """Test that RSA keys are generated"""
         csr = CsrGenerator(csr_info)
-        assert csr.keypair.type() == OpenSSL.crypto.TYPE_RSA
+        assert isinstance(csr.keypair, rsa.RSAPrivateKey)
     
     def test_private_key_format(self, csr_info):
         """Test that private key is in PEM format"""
@@ -604,24 +604,24 @@ class TestECDSA:
         """Test ECDSA P-256 key generation"""
         ecdsa_csr_info['curve'] = 'P-256'
         csr = CsrGenerator(ecdsa_csr_info)
-        assert isinstance(csr.keypair, OpenSSL.crypto.PKey)
+        assert isinstance(csr.keypair, ec.EllipticCurvePrivateKey)
     
     def test_ecdsa_keypair_generation_p384(self, ecdsa_csr_info):
         """Test ECDSA P-384 key generation"""
         ecdsa_csr_info['curve'] = 'P-384'
         csr = CsrGenerator(ecdsa_csr_info)
-        assert isinstance(csr.keypair, OpenSSL.crypto.PKey)
+        assert isinstance(csr.keypair, ec.EllipticCurvePrivateKey)
     
     def test_ecdsa_keypair_generation_p521(self, ecdsa_csr_info):
         """Test ECDSA P-521 key generation"""
         ecdsa_csr_info['curve'] = 'P-521'
         csr = CsrGenerator(ecdsa_csr_info)
-        assert isinstance(csr.keypair, OpenSSL.crypto.PKey)
+        assert isinstance(csr.keypair, ec.EllipticCurvePrivateKey)
     
     def test_ecdsa_default_curve(self, ecdsa_csr_info):
         """Test ECDSA with default curve (P-256)"""
         csr = CsrGenerator(ecdsa_csr_info)
-        assert isinstance(csr.keypair, OpenSSL.crypto.PKey)
+        assert isinstance(csr.keypair, ec.EllipticCurvePrivateKey)
     
     def test_ecdsa_unsupported_curve(self, ecdsa_csr_info):
         """Test that unsupported curves raise error"""
@@ -772,7 +772,7 @@ class TestValidation:
         }
         
         csr = CsrGenerator(csr_info)
-        assert csr.keypair.bits() == 2048
+        assert csr.keypair.key_size == 2048
     
     def test_keysize_invalid_string(self):
         """Test that invalid string key sizes raise ValueError"""

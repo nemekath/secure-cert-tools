@@ -23,10 +23,12 @@
 from _version import __version__
 
 import re
-import OpenSSL.crypto as crypt
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec, rsa
+from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.backends import default_backend
+from cryptography import x509
+from cryptography.x509.oid import NameOID, ExtensionOID
+import ipaddress
 
 
 class CsrGenerator(object):
@@ -262,16 +264,20 @@ class CsrGenerator(object):
 
     def generate_rsa_keypair(self, bits):
         """
-        Generates a public/private RSA keypair of length bits.
+        Generates a public/private RSA keypair of length bits using modern cryptography library.
         """
 
         if bits not in self.SUPPORTED_KEYSIZES:
             raise KeyError("Only 2048 and 4096-bit RSA keys are supported")
 
-        key = crypt.PKey()
-        key.generate_key(crypt.TYPE_RSA, bits)
+        # Generate RSA key using modern cryptography library
+        private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=bits,
+            backend=default_backend()
+        )
 
-        return key
+        return private_key
     
     def generate_ecdsa_keypair(self, curve_name):
         """
@@ -280,38 +286,25 @@ class CsrGenerator(object):
         if curve_name not in self.SUPPORTED_CURVES:
             raise KeyError(f"Unsupported ECDSA curve: {curve_name}. Supported curves: {list(self.SUPPORTED_CURVES.keys())}")
         
-        # Generate ECDSA key using cryptography library
+        # Generate ECDSA key using modern cryptography library
         curve = self.SUPPORTED_CURVES[curve_name]
         private_key = ec.generate_private_key(curve, default_backend())
         
-        # Convert to OpenSSL PKey format
-        pem_private_key = private_key.private_bytes(
+        return private_key
+
+    @property
+    def private_key(self):
+        """Return PEM-encoded private key using modern cryptography library."""
+        return self.keypair.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption()
         )
-        
-        # Load into OpenSSL PKey
-        key = crypt.load_privatekey(crypt.FILETYPE_PEM, pem_private_key)
-        
-        return key
-
-    @property
-    def private_key(self):
-        return crypt.dump_privatekey(crypt.FILETYPE_PEM, self.keypair)
 
     @property
     def csr(self):
-        # Use modern cryptography library instead of deprecated pyOpenSSL
-        from cryptography import x509
-        from cryptography.x509.oid import NameOID, ExtensionOID
-        from cryptography.hazmat.primitives import hashes, serialization
-        from cryptography.hazmat.primitives.asymmetric import rsa, ec
-        import ipaddress
-        
-        # Convert pyOpenSSL key to cryptography format
-        pkey_pem = crypt.dump_privatekey(crypt.FILETYPE_PEM, self.keypair)
-        private_key = serialization.load_pem_private_key(pkey_pem, password=None)
+        """Generate CSR using modern cryptography library."""
+        # Use the private key directly (it's already a cryptography object)
         
         # Build subject name
         subject_components = []
@@ -356,14 +349,14 @@ class CsrGenerator(object):
                 )
         
         # Sign the CSR
-        if isinstance(private_key, rsa.RSAPrivateKey):
+        if isinstance(self.keypair, rsa.RSAPrivateKey):
             hash_algorithm = hashes.SHA256()
-        elif isinstance(private_key, ec.EllipticCurvePrivateKey):
+        elif isinstance(self.keypair, ec.EllipticCurvePrivateKey):
             hash_algorithm = hashes.SHA256()
         else:
             hash_algorithm = hashes.SHA256()  # Default fallback
         
-        csr = builder.sign(private_key, hash_algorithm)
+        csr = builder.sign(self.keypair, hash_algorithm)
         
         # Return PEM-encoded CSR
         return csr.public_bytes(serialization.Encoding.PEM)
@@ -442,11 +435,12 @@ class CsrGenerator(object):
         """Analyze public key and extract key information."""
         try:
             # Get the key type
-            key_type = public_key.type()
+            # Analyze using modern cryptography library
+            from cryptography.hazmat.primitives.asymmetric import rsa, ec
             
-            if key_type == crypt.TYPE_RSA:
+            if isinstance(public_key, rsa.RSAPublicKey):
                 # RSA key analysis
-                key_size = public_key.bits()
+                key_size = public_key.key_size
                 return {
                     'type': 'RSA',
                     'size': key_size,
@@ -455,28 +449,19 @@ class CsrGenerator(object):
                     'is_secure': key_size >= 2048,
                     'details': f'{key_size}-bit RSA key'
                 }
-            else:
-                # Try to analyze as ECDSA
-                try:
-                    # Convert to cryptography format for ECDSA analysis
-                    pem_public_key = crypt.dump_publickey(crypt.FILETYPE_PEM, public_key)
-                    from cryptography.hazmat.primitives import serialization
-                    crypto_public_key = serialization.load_pem_public_key(pem_public_key)
-                    
-                    if hasattr(crypto_public_key, 'curve'):
-                        curve_name = crypto_public_key.curve.name
-                        key_size = crypto_public_key.curve.key_size
-                        return {
-                            'type': 'ECDSA',
-                            'curve': curve_name,
-                            'size': key_size,
-                            'size_bits': key_size,
-                            'security_level': CsrGenerator._get_ecdsa_security_level(curve_name),
-                            'is_secure': curve_name in ['secp256r1', 'secp384r1', 'secp521r1'],
-                            'details': f'{curve_name} curve ({key_size}-bit)'
-                        }
-                except:
-                    pass
+            elif isinstance(public_key, ec.EllipticCurvePublicKey):
+                # ECDSA key analysis using modern cryptography
+                curve_name = public_key.curve.name
+                key_size = public_key.curve.key_size
+                return {
+                    'type': 'ECDSA',
+                    'curve': curve_name,
+                    'size': key_size,
+                    'size_bits': key_size,
+                    'security_level': CsrGenerator._get_ecdsa_security_level(curve_name),
+                    'is_secure': curve_name in ['secp256r1', 'secp384r1', 'secp521r1'],
+                    'details': f'{curve_name} curve ({key_size}-bit)'
+                }
                 
                 return {
                     'type': 'Unknown',
@@ -545,9 +530,7 @@ class CsrGenerator(object):
             
             # First try to get PEM data using deprecated method for compatibility
             try:
-                pem_data = crypt.dump_certificate_request(crypt.FILETYPE_PEM, csr)
-                crypto_csr = x509.load_pem_x509_csr(pem_data)
-                
+                crypto_csr = csr  # Assume already modern csr object
                 # Use modern extraction method
                 return CsrGenerator._extract_modern_extensions(crypto_csr)
             except Exception:
@@ -1257,11 +1240,17 @@ class CsrGenerator(object):
             }
         """
         try:
-            # Load certificate
+            # Load certificate using modern cryptography library
             try:
+                from cryptography import x509
+                from cryptography.hazmat.primitives import serialization
+                
                 if isinstance(certificate_pem, str):
-                    certificate_pem = certificate_pem.encode('utf-8')
-                certificate = crypt.load_certificate(crypt.FILETYPE_PEM, certificate_pem)
+                    certificate_pem_bytes = certificate_pem.encode('utf-8')
+                else:
+                    certificate_pem_bytes = certificate_pem
+                    
+                certificate = x509.load_pem_x509_certificate(certificate_pem_bytes)
             except Exception as e:
                 return {
                     'match': False,
@@ -1290,11 +1279,11 @@ class CsrGenerator(object):
                             'requires_passphrase': True
                         }
                     
-                    # Try to load with passphrase
+                    # Try to load with passphrase using modern cryptography library
                     try:
                         if isinstance(passphrase, str):
                             passphrase = passphrase.encode('utf-8')
-                        private_key = crypt.load_privatekey(crypt.FILETYPE_PEM, private_key_pem_bytes, passphrase)
+                        private_key = serialization.load_pem_private_key(private_key_pem_bytes, password=passphrase)
                     except Exception as e:
                         return {
                             'match': False,
@@ -1304,8 +1293,8 @@ class CsrGenerator(object):
                             'requires_passphrase': True
                         }
                 else:
-                    # Unencrypted private key
-                    private_key = crypt.load_privatekey(crypt.FILETYPE_PEM, private_key_pem_bytes)
+                    # Unencrypted private key using modern cryptography library
+                    private_key = serialization.load_pem_private_key(private_key_pem_bytes, password=None)
                     
             except Exception as e:
                 # Check if this might be an encrypted key without passphrase
@@ -1325,35 +1314,62 @@ class CsrGenerator(object):
                         'cert_info': None
                     }
 
-            # Get public key from certificate
-            cert_public_key = certificate.get_pubkey()
+            # Get public key from certificate using modern cryptography
+            cert_public_key = certificate.public_key()
+            priv_public_key = private_key.public_key()
+            
+            # Compare public keys using modern cryptography
+            from cryptography.hazmat.primitives.asymmetric import rsa, ec
+            
+            if isinstance(cert_public_key, rsa.RSAPublicKey) and isinstance(priv_public_key, rsa.RSAPublicKey):
+                keys_match = (
+                    cert_public_key.public_numbers().n == priv_public_key.public_numbers().n and
+                    cert_public_key.public_numbers().e == priv_public_key.public_numbers().e
+                )
+                key_type = 'RSA'
+                key_size = cert_public_key.key_size
+                key_details = f"Key Type: {key_type}, Key Size: {key_size} bits"
+            elif isinstance(cert_public_key, ec.EllipticCurvePublicKey) and isinstance(priv_public_key, ec.EllipticCurvePublicKey):
+                keys_match = (
+                    cert_public_key.public_numbers().x == priv_public_key.public_numbers().x and
+                    cert_public_key.public_numbers().y == priv_public_key.public_numbers().y and
+                    cert_public_key.curve.name == priv_public_key.curve.name
+                )
+                key_type = 'ECDSA'
+                key_details = f"Key Type: {key_type}, Curve: {cert_public_key.curve.name}"
+            else:
+                return {
+                    'match': False,
+                    'message': 'Key type mismatch',
+                    'details': 'Certificate and private key use different cryptographic algorithms',
+                    'cert_info': None
+                }
 
-            # Get the public key components for comparison
-            cert_pub_pem = crypt.dump_publickey(crypt.FILETYPE_PEM, cert_public_key)
-            priv_pub_pem = crypt.dump_publickey(crypt.FILETYPE_PEM, private_key)
-
-            keys_match = cert_pub_pem == priv_pub_pem
-
-            # Extract certificate information for details
-            subject = certificate.get_subject()
-            cert_info = {
-                'CN': getattr(subject, 'CN', None),
-                'O': getattr(subject, 'O', None),
-                'OU': getattr(subject, 'OU', None),
-                'L': getattr(subject, 'L', None),
-                'ST': getattr(subject, 'ST', None),
-                'C': getattr(subject, 'C', None),
-                'serial_number': str(certificate.get_serial_number()),
-                'not_before': certificate.get_notBefore().decode('utf-8') if certificate.get_notBefore() else None,
-                'not_after': certificate.get_notAfter().decode('utf-8') if certificate.get_notAfter() else None
+            # Extract certificate information for details using modern cryptography
+            subject = certificate.subject
+            
+            # Map OIDs to readable field names
+            from cryptography.x509.oid import NameOID
+            oid_mapping = {
+                NameOID.COUNTRY_NAME: 'C',
+                NameOID.STATE_OR_PROVINCE_NAME: 'ST',
+                NameOID.LOCALITY_NAME: 'L',
+                NameOID.ORGANIZATION_NAME: 'O',
+                NameOID.ORGANIZATIONAL_UNIT_NAME: 'OU',
+                NameOID.COMMON_NAME: 'CN'
             }
-
-            # Get key type and size information
-            key_type = 'RSA' if cert_public_key.type() == crypt.TYPE_RSA else 'ECDSA'
-            key_details = f"Key Type: {key_type}"
-
-            if key_type == 'RSA':
-                key_details += f", Key Size: {cert_public_key.bits()} bits"
+            
+            cert_info = {}
+            for attribute in subject:
+                field_name = oid_mapping.get(attribute.oid, str(attribute.oid))
+                cert_info[field_name] = attribute.value
+            
+            # Add certificate metadata
+            cert_info.update({
+                'serial_number': str(certificate.serial_number),
+                'not_before': certificate.not_valid_before.strftime('%Y%m%d%H%M%SZ'),
+                'not_after': certificate.not_valid_after.strftime('%Y%m%d%H%M%SZ')
+            })
 
             if keys_match:
                 return {
