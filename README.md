@@ -18,7 +18,7 @@ Secure Cert-Tools is a web-based application that provides secure CSR generation
 
 ### 🛡️ Session-Based Encryption (Enterprise-Grade Security)
 
-**Revolutionary protection against malicious root access using browser session encryption:**
+**Advanced protection against malicious root access using browser session encryption:**
 
 **Core Cryptographic Protection:**
 - **ECDH Key Exchange**: P-256 curve with ephemeral session keys
