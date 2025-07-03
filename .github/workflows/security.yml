@@ -25,10 +25,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python 3.9
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: "3.9"
+        python-version: "3.11"
     
     - name: Install dependencies
       run: |
@@ -143,10 +143,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python 3.9
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: "3.9"
+        python-version: "3.11"
     
     - name: Install dependencies
       run: |
@@ -159,8 +159,9 @@ jobs:
         echo "Validating security configurations..."
         
         python -c "
+        import importlib.metadata
         import sys
-        from pkg_resources import get_distribution
+        from packaging import version
         
         # Define minimum secure versions
         security_requirements = {
@@ -176,14 +177,16 @@ jobs:
         issues_found = False
         for package, min_version in security_requirements.items():
             try:
-                current_version = get_distribution(package).version
+                current_version = importlib.metadata.version(package)
                 print(f'✓ {package}: {current_version} (required: >={min_version})')
                 
-                # Basic version comparison (simplified)
-                if package == 'setuptools' and current_version < min_version:
+                # Proper version comparison with packaging
+                if version.parse(current_version) < version.parse(min_version):
                     print(f'❌ SECURITY ISSUE: {package} {current_version} is below minimum secure version {min_version}')
                     issues_found = True
                     
+            except importlib.metadata.PackageNotFoundError:
+                print(f'⚠️ WARNING: {package} not found, skipping check')
             except Exception as e:
                 print(f'❌ ERROR: Could not verify {package}: {e}')
                 issues_found = True
