@@ -40,7 +40,6 @@ jobs:
         
         # Check critical packages
         packages = {
-            'pyOpenSSL': '25.1.0',
             'cryptography': '45.0.4', 
             'setuptools': '80.9.0',
             'zipp': '3.19.1'
