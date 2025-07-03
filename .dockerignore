@@ -1,0 +1,137 @@
+# .dockerignore - Prevent Docker build artifacts from bloating the repository
+# This file ensures that unnecessary files are excluded from Docker build context
+
+# Git repository files
+.git
+.gitignore
+.gitattributes
+
+# Documentation (not needed in container)
+*.md
+docs/
+ARCHITECTURE.md
+API.md
+CHANGELOG.md
+COMPREHENSIVE_APPLICATION_GUIDE.md
+CONTRIBUTING.md
+DEPLOYMENT_MODES.md
+DOCKER_DEPLOYMENT_GUIDE.md
+SECURITY.md
+TESTING.md
+LICENSE
+
+# Development and testing files
+.pytest_cache/
+.coverage
+coverage.json
+bandit_report.json
+security_audit.json
+test_results_*.txt
+*_TEST_RESULTS*.md
+*_SUMMARY.md
+*_VERIFICATION*.md
+*_BACKUP.md
+*_COMPLETE.md
+
+# Python cache and temporary files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Docker-related files that aren't needed in container
+docker-compose*.yml
+Dockerfile.dev
+Dockerfile.test
+
+# Large archive files (these can cause repository bloat)
+*.tar
+*.tar.gz
+*.tar.bz2
+*.tgz
+*.zip
+*.rar
+*.7z
+*.iso
+*.dmg
+
+# Generated certificates and keys (these are auto-generated)
+certs/
+*.crt
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.cer
+*.der
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+logs/
+temp/
+
+# Development scripts and tools
+debug_*.py
+test_*.py
+*_demo.py
+*_example.py
+load-and-run.*
+quick_verify.py
+verify_deployment.py
+
+# CI/CD files (not needed in container)
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# Package management (let container handle this)
+.pip-cache/
+.cache/
+node_modules/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Any file containing "backup" or "old"
+*backup*
+*old*
