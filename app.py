@@ -30,6 +30,7 @@ from flask_wtf.csrf import CSRFProtect, validate_csrf
 from werkzeug.exceptions import TooManyRequests, RequestEntityTooLarge
 
 from csr import CsrGenerator
+from session_crypto import get_session_crypto_manager
 
 app = Flask(__name__)
 
@@ -169,13 +170,162 @@ def version():
     })
 
 
+@app.route('/session-stats')
+def session_stats():
+    """Return session cryptography statistics for monitoring"""
+    try:
+        session_manager = get_session_crypto_manager()
+        stats = session_manager.get_statistics()
+        
+        # Add security status
+        stats['session_encryption_enabled'] = True
+        stats['security_level'] = 'enhanced'
+        
+        return jsonify(stats), 200
+    except Exception as e:
+        return jsonify({
+            'session_encryption_enabled': False,
+            'security_level': 'standard',
+            'error': str(e)
+        }), 200
+
+
 @app.route('/generate', methods=['POST'])
 @limiter.limit("10 per minute", error_message="Too many CSR generation requests. Please wait before trying again.")
 def generate_csr():
     try:
         # Log the request (without sensitive data)
         client_ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
-        logger.info(f"CSR generation request from {client_ip}")
+        
+        # Check if session encryption is requested
+        session_encryption = request.form.get('sessionEncryption', 'false').lower() == 'true'
+        
+        if session_encryption:
+            return _generate_csr_with_session_encryption(client_ip)
+        else:
+            return _generate_csr_standard(client_ip)
+        
+    except KeyError as e:
+        client_ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+        logger.warning(f"CSR generation failed - invalid key/curve from {client_ip}: {str(e)}")
+        error_msg = str(e)
+        if "Only 2048 and 4096-bit RSA keys are supported" in error_msg:
+            return jsonify({
+                'error': 'Invalid RSA key size. Only 2048-bit and 4096-bit RSA keys are supported for security reasons.'
+            }), 400
+        elif "Unsupported ECDSA curve" in error_msg:
+            return jsonify({
+                'error': 'Invalid ECDSA curve. Supported curves are P-256, P-384, and P-521.'
+            }), 400
+        else:
+            return jsonify({'error': f'Missing required field: {error_msg}'}), 400
+            
+    except ValueError as e:
+        client_ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+        sanitized_error = sanitize_for_logging(str(e))
+        logger.warning(f"CSR generation failed - invalid input from {client_ip}: {sanitized_error}")
+        return jsonify({'error': f'Invalid input: {str(e)}'}), 400
+        
+    except RequestEntityTooLarge:
+        client_ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+        logger.warning(f"Request entity too large from {client_ip}")
+        return jsonify({
+            'error': 'Request too large. Maximum request size is 1MB.',
+            'error_type': 'RequestTooLarge'
+        }), 413
+        
+    except Exception as e:
+        client_ip = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+        # Check if this is a request entity too large error (fallback)
+        if '413 Request Entity Too Large' in str(e) or 'RequestEntityTooLarge' in str(type(e).__name__):
+            logger.warning(f"Request entity too large from {client_ip}")
+            return jsonify({
+                'error': 'Request too large. Maximum request size is 1MB.',
+                'error_type': 'RequestTooLarge'
+            }), 413
+        
+        logger.error(f"CSR generation failed - unexpected error from {client_ip}: {str(e)}")
+        return jsonify({'error': 'An unexpected error occurred during CSR generation'}), 500
+
+
+def _generate_csr_with_session_encryption(client_ip):
+    """
+    Generate CSR with session-based encryption for enhanced security
+    """
+    import json
+    
+    try:
+        logger.info(f"🔐 Session-encrypted CSR generation request from {client_ip}")
+        
+        # Extract session encryption parameters
+        session_id = request.form.get('sessionId')
+        client_public_key = request.form.get('clientPublicKey')
+        client_entropy = request.form.get('sessionEntropy')
+        
+        if not all([session_id, client_public_key, client_entropy]):
+            logger.warning(f"Session encryption failed - missing parameters from {client_ip}")
+            return jsonify({'error': 'Missing session encryption parameters'}), 400
+        
+        # Validate required CSR fields
+        if not request.form.get('CN'):
+            logger.warning(f"Session-encrypted CSR generation failed - missing CN from {client_ip}")
+            return jsonify({'error': 'Common Name (CN) is required'}), 400
+        
+        # Parse client data
+        try:
+            client_public_key_data = bytes(json.loads(client_public_key))
+            client_entropy_data = bytes(json.loads(client_entropy))
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.warning(f"Session encryption failed - invalid client data from {client_ip}: {str(e)}")
+            return jsonify({'error': 'Invalid session encryption data format'}), 400
+        
+        # Get session crypto manager
+        session_manager = get_session_crypto_manager()
+        
+        # Create session encryption
+        session_crypto = session_manager.create_session_encryption(
+            session_id, 
+            client_public_key_data, 
+            client_entropy_data,
+            client_ip
+        )
+        
+        # Generate CSR normally
+        csr = CsrGenerator(request.form)
+        
+        # Encrypt private key using session encryption
+        encryption_result = session_manager.encrypt_private_key(
+            session_id,
+            csr.private_key.decode('utf-8')
+        )
+        
+        # Prepare response with encrypted private key
+        response_data = {
+            'csr': csr.csr.decode('utf-8'),
+            'encryptedPrivateKey': encryption_result['encrypted_data'],
+            'encryptionIV': encryption_result['iv'],
+            'serverPublicKey': session_crypto['worker_public_key_data'],
+            'sessionId': session_id,
+            'encryption': 'session-based',
+            'encryptionAlgorithm': encryption_result['encryption_algorithm']
+        }
+        
+        logger.info(f"🛡️ Session-encrypted CSR generated successfully for {client_ip} (session: {session_id[:8]}...)")
+        return jsonify(response_data), 200
+        
+    except Exception as e:
+        logger.error(f"Session-encrypted CSR generation failed from {client_ip}: {str(e)}")
+        # Fallback to standard generation
+        logger.info(f"⚠️ Falling back to standard CSR generation for {client_ip}")
+        return _generate_csr_standard(client_ip)
+
+
+def _generate_csr_standard(client_ip):
+    """
+    Generate CSR with standard (legacy) method
+    """
+    try:
+        logger.info(f"🔧 Standard CSR generation request from {client_ip}")
         
         # Validate required fields
         if not request.form.get('CN'):
@@ -188,11 +338,16 @@ def generate_csr():
         # Return JSON with separate fields
         response_data = {
             'csr': csr.csr.decode('utf-8'),
-            'private_key': csr.private_key.decode('utf-8')
+            'private_key': csr.private_key.decode('utf-8'),
+            'encryption': 'none'
         }
         
-        logger.info(f"CSR generated successfully for {client_ip}")
+        logger.info(f"✅ Standard CSR generated successfully for {client_ip}")
         return jsonify(response_data), 200
+        
+    except Exception as e:
+        logger.error(f"Standard CSR generation failed from {client_ip}: {str(e)}")
+        raise
         
     except KeyError as e:
         logger.warning(f"CSR generation failed - invalid key/curve from {client_ip}: {str(e)}")

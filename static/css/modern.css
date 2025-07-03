@@ -468,6 +468,43 @@ body {
     text-align: right;
 }
 
+/* Security Badges */
+.security-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1px solid;
+}
+
+.security-badge.session-encrypted {
+    background-color: var(--success-bg, #d4edda);
+    color: var(--success-text, #155724);
+    border-color: var(--success-border, #c3e6cb);
+}
+
+.security-badge.standard {
+    background-color: var(--warning-bg, #fff3cd);
+    color: var(--warning-text, #856404);
+    border-color: var(--warning-border, #ffeaa7);
+}
+
+[data-theme="dark"] .security-badge.session-encrypted {
+    background-color: rgba(25, 135, 84, 0.2);
+    color: #75d875;
+    border-color: rgba(25, 135, 84, 0.4);
+}
+
+[data-theme="dark"] .security-badge.standard {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+    border-color: rgba(255, 193, 7, 0.4);
+}
+
 .loading-overlay {
     position: fixed;
     top: 0;
