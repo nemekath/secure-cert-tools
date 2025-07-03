@@ -266,7 +266,85 @@ body {
     margin-right: 8px;
 }
 
-/* Tabs */
+/* Migration Warning Banner */
+.migration-banner {
+    background-color: var(--warning-color);
+    color: black;
+    padding: 16px;
+    margin: 16px 0;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    animation: slideIn 0.5s ease-out;
+}
+
+.migration-banner__content {
+    display: flex;
+    align-items: center;
+}
+
+.migration-banner__icon {
+    margin-right: 16px;
+}
+
+.migration-banner__text {
+    max-width: 600px;
+}
+
+.migration-banner__title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.migration-banner__message {
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+.migration-banner__timeline {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.migration-banner__dismiss {
+    background: none;
+    border: none;
+    color: black;
+    cursor: pointer;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+/* Keyframe Animation for Banner */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+/* Tab Panels */
 .tabs {
     display: flex;
     justify-content: center;

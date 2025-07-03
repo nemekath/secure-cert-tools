@@ -37,6 +37,33 @@
     </div>
 </div>
 
+<!-- Migration Warning Banner -->
+<div class="migration-banner" role="alert" aria-live="polite">
+    <div class="migration-banner__content">
+        <div class="migration-banner__icon">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+        </div>
+        <div class="migration-banner__text">
+            <h3 class="migration-banner__title">🔒 Security Enhancement Coming Soon</h3>
+            <p class="migration-banner__message">
+                We're migrating to <strong>client-side private key generation</strong> for maximum security. 
+                Your private keys will never leave your browser, providing true zero-knowledge protection.
+            </p>
+            <div class="migration-banner__timeline">
+                <span class="migration-timeline__item">📅 Client-side option: <strong>Coming in 2-4 weeks</strong></span>
+                <span class="migration-timeline__item">⚠️ Server-side deprecation: <strong>8-12 weeks</strong></span>
+            </div>
+        </div>
+        <button class="migration-banner__dismiss" aria-label="Dismiss migration notice" onclick="dismissMigrationBanner()">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+</div>
+
 <!-- Tab Navigation -->
 <div class="tabs" role="tablist" aria-label="CSR Generator Functions">
     <button class="tab tab--active" 

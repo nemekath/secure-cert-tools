@@ -80,6 +80,9 @@ class SecureCertTools {
         
         // Initialize key type visibility
         this.handleKeyTypeChange();
+        
+        // Migration banner dismiss
+        this.setupMigrationBanner();
     }
 
     switchTab(activeTab) {
@@ -1526,6 +1529,51 @@ class SecureCertTools {
             passphraseInput.removeAttribute('required');
             passphraseInput.value = ''; // Clear the passphrase field
         }
+    }
+    
+    setupMigrationBanner() {
+        const migrationBanner = document.querySelector('.migration-banner');
+        if (!migrationBanner) return;
+        
+        // Check if user has previously dismissed the banner
+        const isDismissed = localStorage.getItem('migration-banner-dismissed') === 'true';
+        if (isDismissed) {
+            migrationBanner.style.display = 'none';
+            return;
+        }
+        
+        // Add dismiss functionality
+        const dismissBtn = migrationBanner.querySelector('.migration-banner__dismiss');
+        if (dismissBtn) {
+            dismissBtn.addEventListener('click', () => {
+                this.dismissMigrationBanner();
+            });
+        }
+    }
+    
+    dismissMigrationBanner() {
+        const migrationBanner = document.querySelector('.migration-banner');
+        if (migrationBanner) {
+            migrationBanner.style.animation = 'slideOut 0.3s ease-out forwards';
+            
+            setTimeout(() => {
+                migrationBanner.style.display = 'none';
+                localStorage.setItem('migration-banner-dismissed', 'true');
+            }, 300);
+        }
+    }
+}
+
+// Global function for onclick handler
+function dismissMigrationBanner() {
+    const migrationBanner = document.querySelector('.migration-banner');
+    if (migrationBanner) {
+        migrationBanner.style.animation = 'slideOut 0.3s ease-out forwards';
+        
+        setTimeout(() => {
+            migrationBanner.style.display = 'none';
+            localStorage.setItem('migration-banner-dismissed', 'true');
+        }, 300);
     }
 }
 
