@@ -49,6 +49,7 @@ Secure Cert-Tools is a web-based application that provides secure CSR generation
 - Run `python3 demo_session_security.py` to see live protection demos
 - Attack simulations showing encrypted data protection
 - Real-world security scenarios and mitigation effectiveness
+- **📖 READ THE REVOLUTIONARY GUIDE**: See `SESSION_ENCRYPTION_REVOLUTIONARY_GUIDE.md` for complete theory-to-practice explanation
 - **HTTPS by default** with automatic self-signed certificate generation
 - **CSRF Protection** via Flask-WTF for all state-changing operations
 - **Rate Limiting** to prevent DoS attacks (configurable per endpoint)
