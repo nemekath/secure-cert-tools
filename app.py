@@ -27,7 +27,7 @@ from cryptography.hazmat.backends import default_backend
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect, validate_csrf
-from werkzeug.exceptions import TooManyRequests
+from werkzeug.exceptions import TooManyRequests, RequestEntityTooLarge
 
 from csr import CsrGenerator
 
@@ -201,7 +201,22 @@ def generate_csr():
         logger.warning(f"CSR generation failed - invalid input from {client_ip}: {sanitized_error}")
         return jsonify({'error': f'Invalid input: {str(e)}'}), 400
         
+    except RequestEntityTooLarge:
+        logger.warning(f"Request entity too large from {client_ip}")
+        return jsonify({
+            'error': 'Request too large. Maximum request size is 1MB.',
+            'error_type': 'RequestTooLarge'
+        }), 413
+        
     except Exception as e:
+        # Check if this is a request entity too large error (fallback)
+        if '413 Request Entity Too Large' in str(e) or 'RequestEntityTooLarge' in str(type(e).__name__):
+            logger.warning(f"Request entity too large from {client_ip}")
+            return jsonify({
+                'error': 'Request too large. Maximum request size is 1MB.',
+                'error_type': 'RequestTooLarge'
+            }), 413
+        
         logger.error(f"CSR generation failed - unexpected error from {client_ip}: {str(e)}")
         return jsonify({'error': 'An unexpected error occurred during CSR generation'}), 500
 
@@ -418,6 +433,20 @@ def setup_https():
 if __name__ == '__main__':
     import ipaddress
     
+    # SECURITY WARNING: Check if running in production environment
+    flask_env = os.environ.get('FLASK_ENV', 'production').lower()
+    production_mode = os.environ.get('PRODUCTION_MODE', '').lower() == 'true'
+    
+    if flask_env == 'production' or production_mode:
+        logger.error("🚨 SECURITY ERROR: Cannot run Flask development server in production mode!")
+        logger.error("❌ Use 'python start_server.py' instead for production deployment")
+        logger.error("❌ Flask's built-in server is not suitable for production use")
+        logger.error("✅ For development: Set FLASK_ENV=development first")
+        exit(1)
+    
+    logger.warning("⚠️  DEVELOPMENT MODE: Running Flask development server")
+    logger.warning("⚠️  This should only be used for local development!")
+    
     # Setup HTTPS
     ssl_context = setup_https()
     
@@ -428,8 +457,8 @@ if __name__ == '__main__':
     logger.info("🔒 HTTPS is enabled with self-signed certificate")
     
     try:
-        app.run(host='0.0.0.0', port=port, ssl_context=ssl_context)
+        app.run(host='0.0.0.0', port=port, ssl_context=ssl_context, debug=True)
     except Exception as e:
         logger.error(f"Failed to start server with HTTPS: {e}")
         logger.info("Falling back to HTTP...")
-        app.run(host='0.0.0.0', port=port)
+        app.run(host='0.0.0.0', port=port, debug=True)

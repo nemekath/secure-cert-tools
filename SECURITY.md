@@ -4,8 +4,9 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 2.4.x   | :white_check_mark: |
-| <= 2.3  | :x:                |
+| 2.6.x   | :white_check_mark: |
+| 2.5.x   | :white_check_mark: |
+| <= 2.4  | :x:                |
 
 ## Security Features
 
@@ -53,11 +54,11 @@ To report a security vulnerability:
 
 ## Security Testing
 
-The project includes comprehensive security testing with **89% test coverage**:
+The project includes comprehensive security testing with **71% test coverage**:
 
 ### Test Coverage
-- **185+ total tests** with comprehensive security focus
-- **22+ dedicated security tests** for attack prevention
+- **254+ total tests** with comprehensive security focus
+- **64+ dedicated security tests** for attack prevention
 - **Complete edge case coverage** for error handling
 - **Advanced certificate verification** with encrypted key testing
 - **Domain validation security** with RFC compliance edge cases

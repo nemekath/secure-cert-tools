@@ -17,3 +17,11 @@ zipp>=3.19.1  # CVE-2023-45853: Path traversal vulnerability in versions < 3.19.
 # Security enhancements
 Flask-Limiter==3.8.0  # Rate limiting for DoS protection
 Flask-WTF==1.2.1      # CSRF protection for state-changing operations
+
+# Transitive dependencies for Flask-Limiter and Flask-WTF
+limits>=5.4.0         # Required by Flask-Limiter
+ordered-set>=4.1.0    # Required by Flask-Limiter
+rich>=13.9.4          # Required by Flask-Limiter
+WTForms>=3.2.1        # Required by Flask-WTF
+deprecated>=1.2.0     # Required by limits
+markdown-it-py>=3.0.0 # Required by rich

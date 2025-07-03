@@ -103,7 +103,7 @@
             </div>
             
             <form class="form" id="generate-form" novalidate>
-                {{ csrf_token() }}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="form__grid">
                     <!-- Subject Information -->
                     <fieldset class="form__section">
@@ -335,7 +335,7 @@
             </div>
             
             <form class="form" id="verify-form" novalidate>
-                {{ csrf_token() }}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="form__group">
                     <label class="form__label" for="verify-csr">
                         Certificate Signing Request (CSR)
@@ -424,7 +424,7 @@ Paste your private key here or use the upload button above...
             </div>
             
             <form class="form" id="analyze-form" novalidate>
-                {{ csrf_token() }}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="form__group">
                     <label class="form__label" for="analyze-csr">
                         Certificate Signing Request (CSR)
@@ -482,7 +482,7 @@ Paste your CSR here for analysis or use the upload button above...
             </div>
             
             <form class="form" id="verify-cert-form" novalidate>
-                {{ csrf_token() }}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="form__group">
                     <label class="form__label" for="verify-cert-certificate">
                         CA-Signed Certificate

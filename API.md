@@ -215,13 +215,14 @@ curl https://localhost:5555/version
 
 ```json
 {
-  "version": "2.4.0",
-  "release_date": "2024-07-01",
+  "version": "2.6.0",
+  "release_date": "2025-07-03",
   "project_name": "Secure Cert-Tools",
   "description": "Professional Certificate Toolkit",
   "security_fixes": [
     "CVE-2024-6345",
-    "CVE-2023-45853"
+    "CVE-2023-45853",
+    "GHSA-5rjg-fvgr-3xxf"
   ]
 }
 ```

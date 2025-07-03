@@ -31,7 +31,7 @@ Secure Cert-Tools is a web-based application that provides secure CSR generation
 - JSON API endpoints for programmatic access
 - Docker containerization support
 - Production-ready with Gunicorn WSGI server
-- Comprehensive test suite (185+ tests with 89% coverage)
+- Comprehensive test suite (254+ tests with 71% coverage)
 
 ## Installation
 
@@ -303,7 +303,7 @@ pip install -r requirements-dev.txt
 ### Code Quality
 The project maintains code quality through:
 - Flake8 linting with complexity limits
-- Comprehensive testing (185+ tests with 89% coverage)
+- Comprehensive testing (254+ tests with 71% coverage)
 - Security-focused testing and hardening
 - Edge case and error handling coverage
 - CI/CD pipeline with automated checks

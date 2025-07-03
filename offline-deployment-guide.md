@@ -7,7 +7,6 @@ This deployment package contains everything needed to run Secure Cert-Tools in a
 - `secure-cert-tools-v2.4.0-complete.tar` - Complete Docker image with all recent changes
 - `docker-compose.yml` - Production Docker Compose configuration (Gunicorn)
 - `docker-compose.dev.yml` - Development Docker Compose configuration (Flask dev server)
-- `docker-compose.swarm.yml` - Docker Swarm configuration (for production)
 - `.env.example` - Environment variables template
 - `offline-deployment-guide.md` - This deployment guide
 - `load-and-run.sh` - Quick deployment script (Linux/macOS)
@@ -96,26 +95,19 @@ ports:
   - "8080:5555"  # Use port 8080 instead of 5555
 ```
 
-## Production Deployment (Docker Swarm)
+## Production Deployment
 
-For production environments with high availability:
+For production environments:
 
-1. **Initialize Docker Swarm:**
+1. **Set up environment:**
    ```bash
-   docker swarm init
+   cp .env.example .env
+   # Edit .env with production settings
    ```
 
-2. **Create Docker secrets:**
+2. **Deploy with Docker Compose:**
    ```bash
-   echo "your-secure-secret-key" | docker secret create flask_secret_key_v1 -
-   docker secret create cacert_chain_v1 certs/cacert-chain.pem
-   docker secret create server_cert_v1 certs/servercert.pem
-   docker secret create private_key_v1 certs/privatekey.pem
-   ```
-
-3. **Deploy the stack:**
-   ```bash
-   docker stack deploy -c docker-compose.swarm.yml secure-cert-tools
+   docker-compose up -d
    ```
 
 ## Management Commands

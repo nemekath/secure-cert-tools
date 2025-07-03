@@ -133,8 +133,7 @@ secure-cert-tools/
 ├── 🐳 Docker Configuration
 │   ├── Dockerfile
 │   ├── docker-compose.yml (Production)
-│   ├── docker-compose.dev.yml (Development)
-│   └── docker-compose.swarm.yml (Docker Swarm)
+│   └── docker-compose.dev.yml (Development)
 ├── ⚙️ Environment Configuration
 │   └── .env.example
 ├── 🚀 Deployment Scripts
